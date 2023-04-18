@@ -1,10 +1,17 @@
 import streamlit as st
 import httpx
+from fastapi import UploadFile
 from PIL import Image
+import os
+from io import StringIO
+
+SHARED_DATA_PATH = "/usr/src/shared-volume/"
+
 
 def home():
     st.title("TrainMyModel")
     st.write("A clasification model training web app")
+
 
 def test():
     st.title("Test services")
@@ -14,28 +21,33 @@ def test():
     st.write("ML-service response: ", res.text)
     st.write("goni test")
 
+
 def add_class():
     st.title("Add Class")
     st.write("Add a class to the model")
     label = st.text_input("Label")
-    data = st.file_uploader("Data", type=['jpg', 'png'], accept_multiple_files=True)
+    data = st.file_uploader("Data", type=["jpg", "png"], accept_multiple_files=True)
     if st.button("Add Class"):
         if label == "":
             st.error("Label cannot be empty")
         elif len(data) == 0:
             st.error("Data cannot be empty")
         else:
-            # send to model service
-            # data = [StringIO(file.getvalue().decode("utf-8")) for file in data]
-            data = [Image.open(file) for file in data]
-            res = httpx.post("http://localhost:8000/model/add_class", params={"label": label, "data": data})
-            st.write(res)
-            st.success("Class added successfully")
-    
-    # show all classes
-    st.write("Classes")
+            files_dict = {}
+        for i, file in enumerate(data):
+            files_dict[f"file_{i}"] = (file.filename, file.file)
+            # data = [UploadFile(filename=img.name, file=img, size=img.size ) for img in data]
+            # for img in data:
 
-    
+            res = httpx.post("http://backend:8001/model/add_class", data={"label": label, "data": data})
+            st.success("Class added successfully")
+
+    # show all classes
+    with st.expander("See classes"):
+        res = httpx.get("http://backend:8001/model/classes")
+        st.write(res.text)
+
+
 def train():
     st.title("Train Model")
     st.write("Train the model")
@@ -45,20 +57,22 @@ def train():
         # send to model service
         st.success("Model trained successfully")
 
+
 def predict():
     st.title("Predict")
     st.write("Predict the class of the data")
-    data = st.file_uploader("Data", type=['jpg', 'png'], accept_multiple_files=True)
+    data = st.file_uploader("Data", type=["jpg", "png"], accept_multiple_files=True)
     if st.button("Predict"):
         if len(data) == 0:
             st.error("Data cannot be empty")
         else:
             st.success("Prediction successful")
 
+
 def upload():
     st.title("Upload")
     st.write("Upload a file to the model")
-    file = st.file_uploader("File", type=['jpg', 'png'])
+    file = st.file_uploader("File", type=["jpg", "png"])
     if st.button("Upload"):
         if file.filename == "":
             st.error("File cannot be empty")
@@ -68,7 +82,7 @@ def upload():
 
 def main():
     st.sidebar.title("Navigation")
-    selection = st.sidebar.radio("Go to", ["Home","Test services", "Add Class", "Train Model", "Predict", "Upload"])
+    selection = st.sidebar.radio("Go to", ["Home", "Test services", "Add Class", "Train Model", "Predict", "Upload"])
     if selection == "Home":
         home()
     elif selection == "Test services":
@@ -81,6 +95,7 @@ def main():
         predict()
     elif selection == "Upload":
         upload()
+
 
 if __name__ == "__main__":
     main()
