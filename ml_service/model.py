@@ -15,7 +15,7 @@ class MobileNetModel(tf.keras.Model):
         self.mobilenet = MobileNet(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 
         # Add additional layers on top of the pre-trained MobileNet model
-        normalization_layer = layers.Rescaling(1./255)
+        self.normalization_layer = layers.Rescaling(1./255)
         self.global_average_pooling = tf.keras.layers.GlobalAveragePooling2D()
         self.dense1 = tf.keras.layers.Dense(128, activation='relu')
         self.dropout = tf.keras.layers.Dropout(0.5)

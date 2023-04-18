@@ -6,6 +6,14 @@ def home():
     st.title("TrainMyModel")
     st.write("A clasification model training web app")
 
+def test():
+    st.title("Test services")
+    res = httpx.get("http://backend:8001/")
+    st.write("Backend response: ", res.text)
+    res = httpx.get("http://ml-service:8002/")
+    st.write("ML-service response: ", res.text)
+    st.write("goni test")
+
 def add_class():
     st.title("Add Class")
     st.write("Add a class to the model")
@@ -60,9 +68,11 @@ def upload():
 
 def main():
     st.sidebar.title("Navigation")
-    selection = st.sidebar.radio("Go to", ["Home", "Add Class", "Train Model", "Predict", "Upload"])
+    selection = st.sidebar.radio("Go to", ["Home","Test services", "Add Class", "Train Model", "Predict", "Upload"])
     if selection == "Home":
         home()
+    elif selection == "Test services":
+        test()
     elif selection == "Add Class":
         add_class()
     elif selection == "Train Model":

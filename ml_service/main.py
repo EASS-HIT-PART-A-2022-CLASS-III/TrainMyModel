@@ -11,6 +11,11 @@ app = fastapi.FastAPI()
 model = None
 train_ds = None
 
+# root
+@app.get('/')
+async def root():
+    return {"message": "model is running"}
+
 # add class and data to the model
 @app.post('/model/add_class')
 async def add_class(label: str, data):
