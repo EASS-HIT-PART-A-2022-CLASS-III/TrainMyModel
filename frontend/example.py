@@ -1,5 +1,6 @@
 import streamlit as st
 
+
 def intro():
     import streamlit as st
 
@@ -28,6 +29,7 @@ def intro():
         - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
     """
     )
+
 
 def mapping_demo():
     import streamlit as st
@@ -126,12 +128,13 @@ to display geospatial data.
             % e.reason
         )
 
+
 def plotting_demo():
     import streamlit as st
     import time
     import numpy as np
 
-    st.markdown(f'# {list(page_names_to_funcs.keys())[1]}')
+    st.markdown(f"# {list(page_names_to_funcs.keys())[1]}")
     st.write(
         """
         This demo illustrates a combination of plotting and animation with
@@ -219,11 +222,12 @@ def data_frame_demo():
             % e.reason
         )
 
+
 page_names_to_funcs = {
     "—": intro,
     "Plotting Demo": plotting_demo,
     "Mapping Demo": mapping_demo,
-    "DataFrame Demo": data_frame_demo
+    "DataFrame Demo": data_frame_demo,
 }
 
 demo_name = st.sidebar.selectbox("Choose a demo", page_names_to_funcs.keys())

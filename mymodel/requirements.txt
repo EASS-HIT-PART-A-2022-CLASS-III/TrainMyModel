@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-tensorflow
-
+# tensorflow
+tensorflow_hub
 pydantic
 httpx
