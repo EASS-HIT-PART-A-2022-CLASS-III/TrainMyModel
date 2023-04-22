@@ -1,12 +1,9 @@
 import streamlit as st
 
-SHARED_DATA_PATH = "/usr/src/shared-volume/"
-
 st.set_page_config(
     page_title="TrainMyModel",
-    page_icon=":model:",
+    page_icon="🤖",
 )
-
 
 st.markdown(
     """
@@ -24,4 +21,4 @@ st.markdown(
     """
 )
 
-st.sidebar.success("Select a demo above.")
+

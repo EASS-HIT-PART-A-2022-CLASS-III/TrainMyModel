@@ -4,3 +4,4 @@ uvicorn[standard]
 tensorflow_hub
 pydantic
 httpx
+pytest

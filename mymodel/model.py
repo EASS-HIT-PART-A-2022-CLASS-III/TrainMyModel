@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.keras.applications import MobileNet
 from tensorflow.keras import layers
 import tensorflow_hub as hub
 import os

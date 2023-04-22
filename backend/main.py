@@ -14,6 +14,7 @@ app.add_event_handler(
 app.add_event_handler(
     "startup", lambda: os.makedirs(f"{SHARED_DATA_PATH}/model", exist_ok=True)
 )
+evaluation = None
 
 
 @app.get("/")
@@ -23,6 +24,7 @@ async def root():
 
 @app.post("/model/classes/add")
 async def add_class(label: str, number_of_images: int):
+    os.makedirs(f"{SHARED_DATA_PATH}/images/{label}", exist_ok=True)
     return {"message": f"Class {label} added {number_of_images} images successfully"}
 
 
@@ -76,27 +78,32 @@ async def train(batch_size: int, epochs: int):
         )
     if len(os.listdir(f"{SHARED_DATA_PATH}/images")) == 0:
         raise HTTPException(status_code=400, detail="No classes found")
-
+    print("Training model")
     # send to model service
-
-    httpx.post(
+    _ = await httpx.get(
         "http://mymodel:8002/model/train",
         params={"batch_size": batch_size, "epochs": epochs},
     )
 
-    return {
-        "message": "Model started training",
-        "batch_size": batch_size,
-        "epochs": epochs,
-    }
+    # return {
+    #     "message": "Model started training",
+    #     "batch_size": batch_size,
+    #     "epochs": epochs,
+
+    # }
 
 
 @app.post("/model/train/done")
-async def train_done(evaluation: str):
-    r = {"message": "Model training done", "evaluation": evaluation}
-    print(r)
-    httpx.post("http://frontend:8000/model/train/done", json=r)
+async def train_done(eval: str):
+    global evaluation
+    evaluation = eval
+    
 
+@app.get("/model/evaluate")
+async def evaluate():
+    if not evaluation:
+        raise HTTPException(status_code=400, detail="Model not trained")
+    return {"message": "Model evaluated successfully", "evaluation": evaluation}
 
 @app.post("/model/predict")
 async def predict(data: List):

@@ -4,6 +4,7 @@ import tensorflow as tf
 from keras import layers
 import fastapi
 import httpx
+import services
 
 import numpy as np
 
@@ -23,37 +24,15 @@ async def root():
 
 
 # train the model
-@app.post("/model/train")
+@app.get("/model/train", response_model=None)
 async def train(batch_size: int, epochs: int):
-    # load the data from the data folder
-    train_ds = tf.keras.utils.image_dataset_from_directory(
-        IMG_DATA_PATH,
-        validation_split=0.2,
-        subset="training",
-        seed=123,
-        image_size=(224, 224),
-        batch_size=batch_size,
-    )
-    val_ds = tf.keras.utils.image_dataset_from_directory(
-        IMG_DATA_PATH,
-        validation_split=0.2,
-        subset="validation",
-        seed=123,
-        image_size=(224, 224),
-        batch_size=batch_size,
-    )
-    # print('data loaded')
+    
+    train_ds, val_ds = services.get_datasets(IMG_DATA_PATH, batch_size)
+    
     global model
     model = MyModel(len(train_ds.class_names))
 
-    # train the model
-    model.compile(
-        optimizer="adam",
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-        metrics=["accuracy"],
-    )
-    history = model.fit(train_ds, validation_data=val_ds, epochs=epochs, verbose=1)
-
+    history = services.train_model(model, train_ds, val_ds, epochs)
     # grade the model
     acc = history.history["accuracy"]
     val_acc = history.history["val_accuracy"]
@@ -61,6 +40,8 @@ async def train(batch_size: int, epochs: int):
     loss = history.history["loss"]
     val_loss = history.history["val_loss"]
 
+    services.save_model(model, SHARED_DATA_PATH)
+    
     eval =  {
         "message": "Model trained successfully",
         "accuracy": acc,
@@ -68,7 +49,7 @@ async def train(batch_size: int, epochs: int):
         "loss": loss,
         "val_loss": val_loss,
     }
-    httpx.post("http://backend:8000/model/train/done", json=eval)
+    await httpx.post("http://backend:8000/model/train/done", params={'eval':eval})
 
 
 
