@@ -9,7 +9,8 @@ import os
 
 import numpy as np
 
-SHARED_DATA_PATH = "/usr/src/shared-volume"
+BACKEND_URL = os.getenv("BACKEND_URL")
+SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 IMG_DATA_PATH = f"{SHARED_DATA_PATH}/images"
 
 app = fastapi.FastAPI()
@@ -17,8 +18,6 @@ app.model = None
 app.train_ds = None
 
 # root
-
-
 @app.get("/")
 async def root():
     return {"message": "model is running"}

@@ -1,12 +1,14 @@
-
+import os
 import streamlit as st
 import httpx
 import time
 import asyncio
 
+BACKEND_URL = os.getenv("BACKEND_URL")
+
 st.set_page_config(page_title="Train My Model", page_icon="🤖")
 
-model_status = httpx.get("http://backend:8001/model/status").json()
+model_status = httpx.get(f"http://{BACKEND_URL}/model/status").json()
 if model_status["model_info"]["status"] == "trained":
     st.warning("Model already trained")
     st.write("Check model page for info")
@@ -26,7 +28,7 @@ results = st.container()
 
 async def make_request():
     async with httpx.AsyncClient() as client:
-        res = await client.post("http://backend:8001/model/train",
+        res = await client.post(f"http://{BACKEND_URL}/model/train",
                            params={"batch_size": batch_size, "epochs": epochs},
                            timeout=None)  # Set timeout to None to disable it
         return res  # Close the connection immediately

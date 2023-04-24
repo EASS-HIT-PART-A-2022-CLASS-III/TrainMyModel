@@ -3,7 +3,8 @@ import httpx
 import os
 from PIL import Image
 
-SHARED_DATA_PATH = "/usr/src/shared-volume/"
+BACKEND_URL = os.getenv("BACKEND_URL")
+SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 
 st.set_page_config(page_title="My Classes", page_icon="")
 st.title("Model Classes")
@@ -19,7 +20,7 @@ if "edit_class" in st.session_state and st.session_state["edit_class"]:
     st.session_state["edit_class"] = False
 
 
-all_classes = httpx.get("http://backend:8001/model/classes")
+all_classes = httpx.get(f"http://{BACKEND_URL}/model/classes")
 all_classes = all_classes.json()
 
 if len(all_classes) == 0:
@@ -45,7 +46,7 @@ else:
             if tabs[i].button("Save new label", key=f"save_new_label_{i}"):
                 # edit the class
                 res = httpx.post(
-                    "http://backend:8001/model/classes/update",
+                    f"http://{BACKEND_URL}/model/classes/update",
                     params={"oldlabel": gold_label, "newlabel": newlabel},
                 )
                 st.session_state["edit_class"] = True
@@ -55,7 +56,7 @@ else:
         if delete_btn:
             # delete the class
             res = httpx.post(
-                "http://backend:8001/model/classes/delete",
+                f"http://{BACKEND_URL}/model/classes/delete",
                 params={"label": gold_label},
             )
             st.session_state["delete_class"] = True
@@ -79,7 +80,7 @@ if st.button("Add Class"):
             img_file.save(f"{SHARED_DATA_PATH}/images/{label}/{img.name}")
 
         res = httpx.post(
-            "http://backend:8001/model/classes/add",
+            f"http://{BACKEND_URL}/model/classes/add",
             params={"label": label, "number_of_images": len(data)},
         )
         # refresh the page
