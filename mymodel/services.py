@@ -32,4 +32,4 @@ def train_model(model, train_ds, validation_ds, epochs: int):
     return history
 
 def save_model(model, path: str):
-    model.save(f'{path}/model/final_model.h5')
+    model.save_weights(f'{path}/model/final_model')

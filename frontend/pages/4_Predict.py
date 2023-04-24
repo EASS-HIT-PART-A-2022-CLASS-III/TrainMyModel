@@ -2,8 +2,17 @@
 from PIL import Image
 import numpy as np
 import streamlit as st
+import httpx
+import asyncio
 
 st.set_page_config(page_title="Predict", page_icon="📈")
+
+async def make_request(data):
+    async with httpx.AsyncClient() as client:
+        res = await client.post("http://backend:8001/model/predict",
+                           params={"data":data},
+                           timeout=None)  # Set timeout to None to disable it
+        return res
 
 st.title("Predict")
 st.subheader("Either upload a picture or take a picture from camera")
@@ -17,31 +26,16 @@ if mode == "Upload":
             st.error("Data cannot be empty")
         else:
             st.success("File uploaded successfully")
+            res = asyncio.run(make_request(data))
+            container.write(res.json())
+
+
 else:
     container.write("Take a picture from camera")
-    img_file_buffer = st.camera_input("")
+    img_file_buffer = st.camera_input("live-stream", label_visibility='hidden')
 
     if img_file_buffer is not None:
         # To read image file buffer as a PIL Image:
         img = Image.open(img_file_buffer)
-        st.image(img, caption="Uploaded Image.", use_column_width=True)
+        res = asyncio.run(make_request(img))
 
-# st.title("Predict")
-# st.write("Predict the class of the data")
-# data = st.file_uploader("Data", type=["jpg", "png"], accept_multiple_files=True)
-# if st.button("Predict"):
-#     if len(data) == 0:
-#         st.error("Data cannot be empty")
-#     else:
-#         st.success("Prediction successful")
-
-
-# def predict_files():
-#     st.title("Upload")
-#     st.write("Upload a file to the model")
-#     file = st.file_uploader("File", type=["jpg", "png"])
-#     if st.button("Upload"):
-#         if file.filename == "":
-#             st.error("File cannot be empty")
-#         else:
-#             st.success("File uploaded successfully")

@@ -7,8 +7,6 @@ SHARED_DATA_PATH = "/usr/src/shared-volume/"
 
 st.set_page_config(page_title="My Classes", page_icon="")
 st.title("Model Classes")
-st.sidebar.header("My Classes")
-
 
 if "add_class" in st.session_state and st.session_state["add_class"]:
     st.success("Class added successfully")
@@ -22,7 +20,7 @@ if "edit_class" in st.session_state and st.session_state["edit_class"]:
 
 
 all_classes = httpx.get("http://backend:8001/model/classes")
-all_classes = all_classes.json()["classes"]
+all_classes = all_classes.json()
 
 if len(all_classes) == 0:
     st.info("No classes found")
