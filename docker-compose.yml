@@ -11,6 +11,9 @@ services:
       - ./frontend:/usr/src/frontend
       - shared-volume:/usr/src/shared-volume
     build: ./frontend
+    environment:
+      - BACKEND_URL=http://backend:8001
+      - SHARED_VOLUME=/usr/src/shared-volume
 
   backend:
     ports:
@@ -21,6 +24,10 @@ services:
       - ./backend:/usr/src/backend
       - shared-volume:/usr/src/shared-volume
     build: ./backend
+    environment:
+      - MYMODEL_URL=http://mymodel:8002
+      - SHARED_VOLUME=/usr/src/shared-volume
+
 
   mymodel:
     ports:
@@ -30,7 +37,9 @@ services:
       - shared-volume:/usr/src/shared-volume
     build: ./mymodel
     environment:
-      - TF_ENABLE_ONEDNN_OPTS=0
+      - MYMODEL_URL=http://mymodel:8002
+      - SHARED_VOLUME=/usr/src/shared-volume
+
 
 volumes:
   shared-volume:

@@ -10,6 +10,10 @@ app = FastAPI()
 SHARED_DATA_PATH = "/usr/src/shared-volume/"
 
 
+@app.get("/test")
+async def test():
+    return {"message": os.getenv("SHARED_VOLUME")}
+
 @app.on_event("startup")
 def init_data():
     os.makedirs(f"{SHARED_DATA_PATH}/images", exist_ok=True)

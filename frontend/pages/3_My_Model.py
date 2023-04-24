@@ -4,7 +4,8 @@ import httpx
 st.set_page_config(page_title="My Model", page_icon="🤖")
 
 st.title("My Model")
-
+a = httpx.get("http://backend:8001/test")
+st.write(a.text)
 if "model deleted" in st.session_state and st.session_state["model deleted"]:
     st.success("Model deleted successfully")
     st.session_state["model deleted"] = False
