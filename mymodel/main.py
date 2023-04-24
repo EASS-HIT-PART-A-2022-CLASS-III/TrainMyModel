@@ -5,6 +5,7 @@ from keras import layers
 import fastapi
 import httpx
 import services
+import os
 
 import numpy as np
 
@@ -28,34 +29,49 @@ async def root():
 async def train(batch_size: int, epochs: int):
     
     app.train_ds, app.val_ds = services.get_datasets(IMG_DATA_PATH, batch_size)
-    
+
     app.model = MyModel(len(app.train_ds.class_names))
 
     history = services.train_model(app.model, app.train_ds, app.val_ds, epochs)
-    # grade the model
-    acc = history.history["accuracy"]
-    val_acc = history.history["val_accuracy"]
+    
+    # find the best epoch accuracy
+    best_index = np.argmax(history.history["val_accuracy"])
+    acc = history.history["accuracy"][best_index]
+    val_acc = history.history["val_accuracy"][best_index]
 
-    loss = history.history["loss"]
-    val_loss = history.history["val_loss"]
+    loss = history.history["loss"][best_index]
+    val_loss = history.history["val_loss"][best_index]
 
     services.save_model(app.model, SHARED_DATA_PATH)
-    
-    eval =  {
+
+    eval = {
         "accuracy": acc,
         "val_accuracy": val_acc,
         "loss": loss,
         "val_loss": val_loss,
     }
+    
+    return {
+        "train_size": len(app.train_ds.file_paths),
+             "val_size": len(app.val_ds.file_paths),
+               "eval": eval
+               }
 
-    return eval
+@app.get("/model/delete")
+async def delete_model():
+    services.delete_model(SHARED_DATA_PATH)
+    app.model = None
+    return {"message": "Model deleted successfully"}
+
 
 # predict the class of the data
 @app.post("/model/predict")
 async def predict(data):
     if app.model is None:
         # try to load from shared volume
-        raise fastapi.HTTPException(status_code=400, detail="Model not trained")
+        app.model = services.load_model(SHARED_DATA_PATH)
+        if app.model is None:
+            raise fastapi.HTTPException(status_code=400, detail="Model not trained")
 
     # load the image
     img = tf.keras.utils.load_img(data, target_size=(224, 224))

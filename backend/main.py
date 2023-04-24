@@ -20,6 +20,8 @@ def init_data():
         "model_info": {
             "status": "not trained",
             "train_params": None,
+            "train_size": None,
+            "val_size": None,
             "start_time": None,
             "end_time": None,
             "evaluation": None,
@@ -92,21 +94,25 @@ async def train(batch_size: int, epochs: int):
     if len(os.listdir(f"{SHARED_DATA_PATH}/images")) == 0:
         raise HTTPException(status_code=400, detail="No classes found")
 
-    
+
     app.model_status["model_info"]["status"] = "training"
     app.model_status["model_info"]["train_params"] = {"batch_size": batch_size, "epochs": epochs}
     app.model_status["model_info"]["start_time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     async with httpx.AsyncClient() as client:
-        eval = await client.get(
+        res = await client.get(
             "http://mymodel:8002/model/train", params=app.model_status["model_info"]["train_params"], timeout=None
         )
+    res = res.json()
+    
     # send to model service
     app.model_status["model_info"]["status"] = "trained"
     app.model_status["model_info"]["end_time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    app.model_status["model_info"]["evaluation"] = eval.json()
-    print("done")
-    print(app.model_status)
+    app.model_status["model_info"]["train_size"] = res['train_size']
+    app.model_status["model_info"]["val_size"] = res['val_size']
+    app.model_status["model_info"]["evaluation"] = res['eval']
+    
+
     return {"message": "Model training finished"}
 
 
@@ -115,6 +121,19 @@ async def train(batch_size: int, epochs: int):
 async def get_status():
     return app.model_status
 
+@app.get("/model/delete")
+async def delete_model():
+    # send to model service
+    async with httpx.AsyncClient() as client:
+        await client.get("http://mymodel:8002/model/delete", timeout=None)
+    app.model_status["model_info"]["status"] = "not trained"
+    app.model_status["model_info"]["train_params"] = None
+    app.model_status["model_info"]["train_size"] = None
+    app.model_status["model_info"]["val_size"] = None
+    app.model_status["model_info"]["start_time"] = None
+    app.model_status["model_info"]["end_time"] = None
+    app.model_status["model_info"]["evaluation"] = None
+    return {"message": "Model deleted successfully"}
 
 @app.post("/model/predict")
 async def predict(data: List):

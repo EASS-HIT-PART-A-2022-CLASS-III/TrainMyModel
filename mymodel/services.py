@@ -1,24 +1,16 @@
 import tensorflow as tf
-
+from model import MyModel
+import os
 
 def get_datasets(path: str, batch_size: int):
-    train_ds = tf.keras.utils.image_dataset_from_directory(
+    return tf.keras.utils.image_dataset_from_directory(
         path,
         validation_split=0.2,
-        subset="training",
+        subset="both",
         seed=123,
         image_size=(224, 224),
         batch_size=batch_size,
-    )
-    val_ds = tf.keras.utils.image_dataset_from_directory(
-        path,
-        validation_split=0.2,
-        subset="validation",
-        seed=123,
-        image_size=(224, 224),
-        batch_size=batch_size,
-    )
-    return train_ds, val_ds
+    ) 
 
 
 def train_model(model, train_ds, validation_ds, epochs: int):
@@ -33,3 +25,18 @@ def train_model(model, train_ds, validation_ds, epochs: int):
 
 def save_model(model, path: str):
     model.save_weights(f'{path}/model/final_model')
+
+def load_model(path: str):
+    if len(os.listdir(f'{path}/model')) == 0:
+        return None
+    model = MyModel()
+    model.load_weights(f'{path}/model/final_model')
+    return model
+
+def delete_model(path: str):
+    files = os.listdir(f'{path}/model')
+    if len(files) == 0:
+        return None
+    for file in files:
+        os.remove(f'{path}/model/{file}')
+    return None
