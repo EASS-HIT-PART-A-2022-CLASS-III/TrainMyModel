@@ -27,14 +27,18 @@ else:
     st.markdown("Now you can predict with it or train it again!")
     st.divider()
     st.markdown("""
-    **Download the model**  
-    The zip file contains the weights, index and checkpoint.
-    To load it in your code, define the class and load the weights:
+    ##### **Download the model**  
+    The zip file contains the weights, index and checkpoint.  
+    To load it in your code:  
+    1. Unzip the weights  
+    2. Define the class in your code
+    3. Load the weights using tensorflow
+      
+    Example:
     ```
     model = MyModel()
     model.load_weights(f'path/to/model/final_model')
     ```
-    
     """)
 
     with open(f'{SHARED_DATA_PATH}/output/model_weights.zip','rb') as file:
@@ -44,7 +48,8 @@ else:
                           )
 
     st.divider()
-    expander = st.expander("More Info")
+    st.markdown("##### **Model information:**")
+    expander = st.expander("Open for info")
     expander.write(status)
     st.divider()
     st.warning("Training again will reset the model")

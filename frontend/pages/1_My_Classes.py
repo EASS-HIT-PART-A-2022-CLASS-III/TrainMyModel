@@ -7,6 +7,9 @@ from PIL import Image
 BACKEND_URL = os.getenv("BACKEND_URL")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 
+color = ['blue','red','green','yellow','purple','white','orange']
+
+
 st.set_page_config(page_title="My Classes", page_icon="")
 st.title("Model Classes")
 
@@ -40,12 +43,12 @@ else:
     for i, (gold_label, img_count) in enumerate(all_classes.items()):
         _, col1,col2,_ = tabs[i].columns(4)
         with col1:
-            st.markdown("### **:blue[Class:]**")
-            st.markdown("### **:blue[Samples:]**")
+            st.markdown("#### **Class:**")
+            st.markdown("#### **Samples:**")
 
         with col2:
-            st.subheader(gold_label)
-            st.subheader(img_count)
+            st.markdown(f"#### :{color[i]}[{gold_label}]")
+            st.markdown(f"#### :{color[i]}[{img_count}]")
         # tabs[i].subheader(f"Class: {gold_label}")
         # tabs[i].subheader(f"Number of images: {img_count}")
         tabs[i].markdown("    ")
