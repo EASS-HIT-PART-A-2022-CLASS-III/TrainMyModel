@@ -18,6 +18,7 @@ def init_data():
     # create shared volume folders
     os.makedirs(f"{SHARED_DATA_PATH}/images", exist_ok=True)
     os.makedirs(f"{SHARED_DATA_PATH}/model", exist_ok=True)
+    os.makedirs(f"{SHARED_DATA_PATH}/output", exist_ok=True)
     
     # init model status
     app.model_status = {

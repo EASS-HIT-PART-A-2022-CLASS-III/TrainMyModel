@@ -1,6 +1,7 @@
 import streamlit as st
 import httpx
 import os
+import random
 from PIL import Image
 
 BACKEND_URL = os.getenv("BACKEND_URL")
@@ -37,31 +38,55 @@ else:
     tabs = st.tabs(all_classes)
 
     for i, (gold_label, img_count) in enumerate(all_classes.items()):
-        tabs[i].subheader(f"Class: {gold_label}")
-        tabs[i].subheader(f"Number of images: {img_count}")
+        _, col1,col2,_ = tabs[i].columns(4)
+        with col1:
+            st.markdown("### **:blue[Class:]**")
+            st.markdown("### **:blue[Samples:]**")
 
-        edit_btn = tabs[i].checkbox("Edit Class label", key=f"edit_class_{i}")
+        with col2:
+            st.subheader(gold_label)
+            st.subheader(img_count)
+        # tabs[i].subheader(f"Class: {gold_label}")
+        # tabs[i].subheader(f"Number of images: {img_count}")
+        tabs[i].markdown("    ")
+        edit_btn = tabs[i].checkbox("Edit Class", key=f"edit_class_{i}")
         if edit_btn:
-            newlabel = tabs[i].text_input("New Label", value=gold_label)
-            if tabs[i].button("Save new label", key=f"save_new_label_{i}"):
-                # edit the class
-                res = httpx.post(
-                    f"{BACKEND_URL}/model/classes/update",
-                    params={"oldlabel": gold_label, "newlabel": newlabel},
-                )
-                st.session_state["edit_class"] = True
-                st.experimental_rerun()
+            cols = tabs[i].columns(2)
+            with cols[0]:
+                newlabel = st.text_input("New Label", value=gold_label)
+                if st.button("Save new label", key=f"save_new_label_{i}"):
+                    # edit the class
+                    res = httpx.post(
+                        f"{BACKEND_URL}/model/classes/update",
+                        params={"oldlabel": gold_label, "newlabel": newlabel},
+                    )
+                    st.session_state["edit_class"] = True
+                    st.experimental_rerun()
+            with cols[1]:
+                st.write("")
+                st.warning("Deleting the class is irreversible")
+                delete_btn = st.button("Delete Class", key=f"delete_class_{i}")
+                if delete_btn:
+                    # delete the class
+                    res = httpx.post(
+                        f"{BACKEND_URL}/model/classes/delete",
+                        params={"label": gold_label},
+                    )
+                    st.session_state["delete_class"] = True
+                    st.experimental_rerun()
+        img_samples = tabs[i].expander("Image samples")
+        
+        img_path = f"{SHARED_DATA_PATH}/images"
+        img_list = os.listdir(f"{img_path}/{gold_label}")
 
-        delete_btn = tabs[i].button("Delete Class", key=f"delete_class_{i}")
-        if delete_btn:
-            # delete the class
-            res = httpx.post(
-                f"{BACKEND_URL}/model/classes/delete",
-                params={"label": gold_label},
-            )
-            st.session_state["delete_class"] = True
-            st.experimental_rerun()
-
+        cols=img_samples.columns(3)
+        for col in cols:
+            with col:
+                img = random.choice(img_list)
+                img_list.remove(img)
+                img = Image.open(f"{img_path}/{gold_label}/{img}")
+                img = img.resize((200,200))
+                col.image(img)
 st.divider()
 #
 st.write("Add a class to the model:")

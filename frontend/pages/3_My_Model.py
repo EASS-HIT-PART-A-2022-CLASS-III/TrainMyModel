@@ -1,8 +1,10 @@
 import streamlit as st
 import httpx
 import os
+import shutil
 
 BACKEND_URL = os.getenv("BACKEND_URL")
+SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 
 st.set_page_config(page_title="My Model", page_icon="🤖")
 
@@ -21,8 +23,26 @@ if status["model_info"]["status"] == "not trained":
 elif status["model_info"]["status"] == "training":
     st.write("Model is training")
 else:
-    st.write("Model is trained!")
-    st.write("Now you can predict with it or train it again!")
+    st.markdown("**Model is trained!**")
+    st.markdown("Now you can predict with it or train it again!")
+    st.divider()
+    st.markdown("""
+    **Download the model**  
+    The zip file contains the weights, index and checkpoint.
+    To load it in your code, define the class and load the weights:
+    ```
+    model = MyModel()
+    model.load_weights(f'path/to/model/final_model')
+    ```
+    
+    """)
+
+    with open(f'{SHARED_DATA_PATH}/output/model_weights.zip','rb') as file:
+        download_btn = st.download_button(label="Download weights",
+                            data=file,
+                            file_name="model_weights.zip"
+                          )
+
     st.divider()
     expander = st.expander("More Info")
     expander.write(status)

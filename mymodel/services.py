@@ -1,6 +1,7 @@
 import tensorflow as tf
 from model import MyModel
 import os
+import shutil
 
 def get_datasets(path: str, batch_size: int):
     return tf.keras.utils.image_dataset_from_directory(
@@ -25,6 +26,8 @@ def train_model(model, train_ds, validation_ds, epochs: int):
 
 def save_model(model, path: str):
     model.save_weights(f'{path}/model/final_model')
+    shutil.make_archive(f"{path}/output/model_weights","zip", f'{path}/model')
+
 
 def load_model(path: str):
     if len(os.listdir(f'{path}/model')) == 0:
