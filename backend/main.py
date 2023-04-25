@@ -123,7 +123,7 @@ async def train(batch_size: int, epochs: int):
     # strat training in model service
     async with httpx.AsyncClient() as client:
         res = await client.get(
-            f"http://{MYMODEL_URL}/model/train", params=app.model_status["model_info"]["train_params"], timeout=None
+            f"{MYMODEL_URL}/model/train", params=app.model_status["model_info"]["train_params"], timeout=None
         )
     res = res.json()
     
@@ -141,7 +141,7 @@ async def train(batch_size: int, epochs: int):
 async def delete_model():
     # send to model service
     async with httpx.AsyncClient() as client:
-        await client.get(f"http://{MYMODEL_URL}/model/delete", timeout=None)
+        await client.get(f"{MYMODEL_URL}/model/delete", timeout=None)
     
     # update model status
     app.model_status["model_info"]["status"] = "not trained"
@@ -162,7 +162,7 @@ async def predict(data: List):
     # send to model service
     async with httpx.AsyncClient() as client:
         eval = await client.post(
-            f"http://{MYMODEL_URL}/model/predict", params={'data':data}, timeout=None
+            f"{MYMODEL_URL}/model/predict", params={'data':data}, timeout=None
         )
     return eval
 

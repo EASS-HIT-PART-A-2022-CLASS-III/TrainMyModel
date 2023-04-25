@@ -12,7 +12,7 @@ if "model deleted" in st.session_state and st.session_state["model deleted"]:
     st.success("Model deleted successfully")
     st.session_state["model deleted"] = False
 
-status = httpx.get(f"http://{BACKEND_URL}/model/status").json()
+status = httpx.get(f"{BACKEND_URL}/model/status").json()
 
 # st.write(status)
 if status["model_info"]["status"] == "not trained":
@@ -29,7 +29,7 @@ else:
     st.divider()
     st.warning("Training again will reset the model")
     if st.button("I want to train again"):
-        res = httpx.get(f"http://{BACKEND_URL}/model/delete")
+        res = httpx.get(f"{BACKEND_URL}/model/delete")
         st.session_state["model deleted"] = True
         st.experimental_rerun()
         

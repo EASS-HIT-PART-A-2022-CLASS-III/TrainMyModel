@@ -10,7 +10,7 @@ st.set_page_config(page_title="Predict", page_icon="📈")
 
 async def make_request(data):
     async with httpx.AsyncClient() as client:
-        res = await client.post(f"http://{BACKEND_URL}/model/predict",
+        res = await client.post(f"{BACKEND_URL}/model/predict",
                            params={"data":data},
                            timeout=None)  # Set timeout to None to disable it
         return res

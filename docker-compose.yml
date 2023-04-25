@@ -37,7 +37,7 @@ services:
       - shared-volume:/usr/src/shared-volume
     build: ./mymodel
     environment:
-      - MYMODEL_URL=http://mymodel:8002
+      - BACKEND_URL=http://backend:8001
       - SHARED_VOLUME=/usr/src/shared-volume
 
 

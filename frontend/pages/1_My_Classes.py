@@ -20,7 +20,7 @@ if "edit_class" in st.session_state and st.session_state["edit_class"]:
     st.session_state["edit_class"] = False
 
 
-all_classes = httpx.get(f"http://{BACKEND_URL}/model/classes")
+all_classes = httpx.get(f"{BACKEND_URL}/model/classes")
 all_classes = all_classes.json()
 
 if len(all_classes) == 0:
@@ -46,7 +46,7 @@ else:
             if tabs[i].button("Save new label", key=f"save_new_label_{i}"):
                 # edit the class
                 res = httpx.post(
-                    f"http://{BACKEND_URL}/model/classes/update",
+                    f"{BACKEND_URL}/model/classes/update",
                     params={"oldlabel": gold_label, "newlabel": newlabel},
                 )
                 st.session_state["edit_class"] = True
@@ -56,7 +56,7 @@ else:
         if delete_btn:
             # delete the class
             res = httpx.post(
-                f"http://{BACKEND_URL}/model/classes/delete",
+                f"{BACKEND_URL}/model/classes/delete",
                 params={"label": gold_label},
             )
             st.session_state["delete_class"] = True
@@ -80,7 +80,7 @@ if st.button("Add Class"):
             img_file.save(f"{SHARED_DATA_PATH}/images/{label}/{img.name}")
 
         res = httpx.post(
-            f"http://{BACKEND_URL}/model/classes/add",
+            f"{BACKEND_URL}/model/classes/add",
             params={"label": label, "number_of_images": len(data)},
         )
         # refresh the page
