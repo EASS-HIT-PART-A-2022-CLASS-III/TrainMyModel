@@ -1,17 +1,19 @@
 
 from PIL import Image
-import numpy as np
+import os
 import streamlit as st
 import httpx
 import asyncio
 from fastapi.responses import FileResponse
 
+BACKEND_URL = os.getenv("BACKEND_URL")
+
 st.set_page_config(page_title="Predict", page_icon="📈")
 
-async def make_request(data):
+async def make_request(file):
     async with httpx.AsyncClient() as client:
         res = await client.post(f"{BACKEND_URL}/model/predict",
-                           params={"data":data},
+                           params={"file":file},
                            timeout=None)  # Set timeout to None to disable it
         return res
 
@@ -27,9 +29,8 @@ if mode == "Upload":
         if len(data) == 0:
             st.error("Data cannot be empty")
         else:
-            st.write(data)
-            
-            st.success("File uploaded successfully")
+            res = asyncio.run(make_request(data))
+            st.success(res.text)
             # res = asyncio.run(make_request(data))
             # container.write(res.json())
 
