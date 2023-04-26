@@ -1,5 +1,5 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, UploadFile, File
+# from fastapi.responses import FileResponse
 from typing import List
 import shutil
 import os
@@ -156,14 +156,19 @@ async def delete_model():
     return {"message": "Model deleted successfully"}
 
 @app.post("/model/predict")
-async def predict(data: List):
-    # check data
-    if len(data) == 0:
-        raise HTTPException(status_code=400, detail="Data cannot be empty")
+async def predict(file : UploadFile = File(...)):
+    # save file to shared folder
+    filename = file.filename
+    path = f"{SHARED_DATA_PATH}/output/{filename}"
+    with open(path, 'wb') as f:
+        content = await file.read()
+        f.write(content)
+
     # send to model service
     async with httpx.AsyncClient() as client:
         eval = await client.post(
-            f"{MYMODEL_URL}/model/predict", params={'data':data}, timeout=None
+            f"{MYMODEL_URL}/model/predict", params={'filename':filename}, timeout=None
         )
+        
     return eval
 

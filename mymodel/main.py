@@ -65,7 +65,7 @@ async def delete_model():
 
 # predict the class of the data
 @app.post("/model/predict")
-async def predict(data):
+async def predict(file_path :str):
     if app.model is None:
         # try to load from shared volume
         app.model = services.load_model(SHARED_DATA_PATH)
@@ -73,7 +73,7 @@ async def predict(data):
             raise fastapi.HTTPException(status_code=400, detail="Model not trained")
 
     # load the image
-    img = tf.keras.utils.load_img(data, target_size=(224, 224))
+    img = tf.keras.utils.load_img(file_path, target_size=(224, 224))
     img_array = tf.keras.utils.img_to_array(img)
     img_array = tf.expand_dims(img_array, 0)  # Create a batch
 
