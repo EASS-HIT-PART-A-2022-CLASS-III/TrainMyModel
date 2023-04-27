@@ -6,8 +6,16 @@ import fastapi
 import httpx
 import services
 import os
-
 import numpy as np
+from pydantic import BaseModel
+
+############ DATA CLASS ############
+
+class DataClass(BaseModel):
+    name: str
+    samples: int
+
+############ MYMODEL INIT ############
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
@@ -17,7 +25,9 @@ app = fastapi.FastAPI(title="TrainMyModel MyModel", version="0.1.0")
 app.model = None
 app.train_ds = None
 
-# root
+
+############ ROUTES ############
+
 @app.get("/")
 async def root():
     return {"message": "model is running"}
@@ -65,7 +75,7 @@ async def delete_model():
 
 # predict the class of the data
 @app.post("/model/predict")
-async def predict(path_to_img :str, classes:List):
+async def predict(path_to_img :str, classes:List[DataClass]):
     print(classes)
     if app.model is None:
 

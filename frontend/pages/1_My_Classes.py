@@ -7,7 +7,7 @@ from PIL import Image
 BACKEND_URL = os.getenv("BACKEND_URL")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 
-color = ['blue','red','green','yellow','purple','white','orange']
+color = ['blue', 'green', 'orange', 'red', 'violet']
 
 
 st.set_page_config(page_title="My Classes", page_icon="🐕‍🦺")
@@ -49,8 +49,7 @@ else:
         with col2:
             st.markdown(f"#### :{color[i]}[{gold_label}]")
             st.markdown(f"#### :{color[i]}[{img_count}]")
-        # tabs[i].subheader(f"Class: {gold_label}")
-        # tabs[i].subheader(f"Number of images: {img_count}")
+
         tabs[i].markdown("    ")
         edit_btn = tabs[i].checkbox("Edit Class", key=f"edit_class_{i}")
         if edit_btn:

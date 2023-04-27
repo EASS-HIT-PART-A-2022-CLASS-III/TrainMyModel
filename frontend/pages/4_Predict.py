@@ -42,36 +42,12 @@ if mode == "Upload":
     # create a Streamlit file uploader
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
+    if st.button("Upload"):
     # if an image is uploaded, send the request
-    if uploaded_file is not None:
-        response = asyncio.run(send_request(uploaded_file))
-        # do something with the response
-        # st.write("Response status:", response.status_code)
-        st.write("Response text:", response)
-#     def send_request(data):
-#         with httpx.Client() as client:
-#             response = client.post(f"{BACKEND_URL}/model/predict", files=data)
-#         return response
+        if uploaded_file is not None:
+            response = asyncio.run(send_request(uploaded_file))
 
-# # create a Streamlit file uploader
-#     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-
-#     # if an image is uploaded, send the request
-#     if uploaded_file is not None:
-#         data = {"file": uploaded_file}
-#         response = send_request(data)
-#         # do something with the response
-#         st.write("Response status:", response.status_code)
-#         st.write("Response text:", response.text)
-    # data = st.file_uploader("Data", type=["jpg", "png"], accept_multiple_files=False)
-
-    # if st.button("Upload"):
-    #     if data is None:
-    #         st.error("Data cannot be empty")
-    #     else:
-    #         # img = Image.open(data)
-    #         res = asyncio.run(make_request(data.filename))
-    #         st.success(res.text)
+            st.write("Response text:", response)
 
 
 else:

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
+
 # from fastapi.responses import FileResponse
 from typing import List
 import shutil
@@ -9,6 +10,7 @@ from pydantic import BaseModel
 
 
 ############ DATA CLASS ############
+
 
 class DataClass(BaseModel):
     name: str
@@ -22,13 +24,14 @@ app = FastAPI(title="TrainMyModel Backend", version="0.1.0")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 MYMODEL_URL = os.getenv("MYMODEL_URL")
 
+
 @app.on_event("startup")
 def init_data():
     # create shared volume folders
     os.makedirs(f"{SHARED_DATA_PATH}/images", exist_ok=True)
     os.makedirs(f"{SHARED_DATA_PATH}/model", exist_ok=True)
     os.makedirs(f"{SHARED_DATA_PATH}/output", exist_ok=True)
-    
+
     # init model status
     app.model_status = {
         "data": [],
@@ -50,7 +53,9 @@ def init_data():
             samples = len(os.listdir(f"{SHARED_DATA_PATH}/images/{folder}"))
             app.model_status["data"].append(DataClass(name=folder, samples=samples))
 
+
 ############ ROUTES ############
+
 
 @app.get("/")
 async def root():
@@ -59,9 +64,11 @@ async def root():
 
 ########## CLASS MANAGEMENT ROUTES ##########
 
+
 @app.get("/model/classes")
 async def get_classes():
-    return app.model_status["data"]
+    cls_names = {cls.name: cls.samples for cls in app.model_status["data"]}
+    return cls_names
 
 
 @app.post("/model/classes/add")
@@ -73,13 +80,14 @@ async def add_class(label: str, number_of_images: int):
     for data_class in app.model_status["data"]:
         if data_class.name == label:
             data_class.samples += number_of_images
-    
-
-
-    if label not in app.model_status["data"]:
-        app.model_status["data"][label] = number_of_images
+            break
     else:
-        app.model_status["data"][label] += number_of_images
+        app.model_status["data"].append(DataClass(name=label, samples=number_of_images))
+
+    # if label not in app.model_status["data"]:
+    #     app.model_status["data"][label] = number_of_images
+    # else:
+    #     app.model_status["data"][label] += number_of_images
 
     return {"message": f"Class {label} added {number_of_images} images successfully"}
 
@@ -91,15 +99,20 @@ async def update_class(oldlabel: str, newlabel: str):
         raise HTTPException(status_code=400, detail="Class not found")
     else:
         # update class name in model status
-        app.model_status["data"][newlabel] = app.model_status["data"][oldlabel]
-        del app.model_status["data"][oldlabel]
+
+        for data_class in app.model_status["data"]:
+            if data_class.name == oldlabel:
+                data_class.name = newlabel
+                break
 
         # update class name in shared volume
         os.rename(
             os.path.join(f"{SHARED_DATA_PATH}/images/", oldlabel),
             os.path.join(f"{SHARED_DATA_PATH}/images/", newlabel),
         )
+
     return {"message": f"Class {oldlabel} changed to {newlabel} successfully"}
+
 
 @app.post("/model/classes/delete")
 async def delete_class(label: str):
@@ -108,7 +121,10 @@ async def delete_class(label: str):
         raise HTTPException(status_code=400, detail="Class not found")
     else:
         # delete class from model status
-        del app.model_status["data"][label]
+        for data_class in app.model_status["data"]:
+            if data_class.name == label:
+                app.model_status["data"].remove(data_class)
+                break
 
         # delete class from shared volume
         shutil.rmtree(f"{SHARED_DATA_PATH}/images/{label}", ignore_errors=True)
@@ -118,9 +134,11 @@ async def delete_class(label: str):
 
 ########## MODEL MANAGEMENT ROUTES ##########
 
+
 @app.get("/model/status")
 async def get_status():
     return app.model_status
+
 
 @app.post("/model/train")
 async def train(batch_size: int, epochs: int):
@@ -143,14 +161,14 @@ async def train(batch_size: int, epochs: int):
             f"{MYMODEL_URL}/model/train", params=app.model_status["model_info"]["train_params"], timeout=None
         )
     res = res.json()
-    
+
     # update model status
     app.model_status["model_info"]["status"] = "trained"
     app.model_status["model_info"]["end_time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    app.model_status["model_info"]["train_size"] = res['train_size']
-    app.model_status["model_info"]["val_size"] = res['val_size']
-    app.model_status["model_info"]["evaluation"] = res['eval']
-    
+    app.model_status["model_info"]["train_size"] = res["train_size"]
+    app.model_status["model_info"]["val_size"] = res["val_size"]
+    app.model_status["model_info"]["evaluation"] = res["eval"]
+
     return {"message": "Model training finished"}
 
 
@@ -159,7 +177,7 @@ async def delete_model():
     # send to model service
     async with httpx.AsyncClient() as client:
         await client.get(f"{MYMODEL_URL}/model/delete", timeout=None)
-    
+
     # update model status
     app.model_status["model_info"]["status"] = "not trained"
     app.model_status["model_info"]["train_params"] = None
@@ -171,27 +189,33 @@ async def delete_model():
 
     return {"message": "Model deleted successfully"}
 
+
 @app.post("/model/predict")
-async def predict(file : UploadFile= File(...)):
+async def predict(file: UploadFile = File(...)):
     # save file to shared folder
     filename = file.filename
-    
     path = f"{SHARED_DATA_PATH}/output/{filename}"
     content = await file.read()
-    with open(path, 'wb') as f:
+    with open(path, "wb") as f:
         f.write(content)
-    
+    print(app.model_status["data"])
+    print(
+        f"{MYMODEL_URL}/model/predict",
+    )
     # send to model service
     async with httpx.AsyncClient() as client:
         eval = await client.post(
-            f"{MYMODEL_URL}/model/predict", params={'path_to_img':path, 'classes': list(app.model_status['data'].keys())}, timeout=None
+            f"{MYMODEL_URL}/model/predict",
+            data={"path_to_img": path, "classes": app.model_status["data"]},
+            timeout=None,
         )
-        
+
     return eval
 
-@app.post("/upload-image/")
-async def upload_image(image: UploadFile = File(...)):
-    contents = await image.read()
-    with open(image.filename, "wb") as f:
-        f.write(contents)
-    return {"filename": image.filename}
+
+# @app.post("/upload-image/")
+# async def upload_image(image: UploadFile = File(...)):
+#     contents = await image.read()
+#     with open(image.filename, "wb") as f:
+#         f.write(contents)
+#     return {"filename": image.filename}
