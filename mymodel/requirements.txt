@@ -5,3 +5,4 @@ tensorflow_hub
 pydantic
 httpx
 pytest
+pillow

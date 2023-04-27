@@ -18,20 +18,22 @@ status = httpx.get(f"{BACKEND_URL}/model/status").json()
 
 # st.write(status)
 if status["model_info"]["status"] == "not trained":
-    st.write("Model is not trained")
-    st.write("Go to the train page to train it")
+    st.error("Model is not trained")
+    st.write("Go to the train page to train it 🚂")
+    st.stop()
 elif status["model_info"]["status"] == "training":
-    st.write("Model is training")
+    st.warning("Model is training")
+    st.write("Be patient, it will be ready soon 😊")
 else:
     st.markdown("**Model is trained!**")
     st.markdown("Now you can predict with it or train it again!")
     st.divider()
     st.markdown("""
     ##### **Download the model**  
-    The zip file contains the weights, index and checkpoint.  
-    To load it in your code:  
-    1. Unzip the weights  
-    2. Define the class in your code
+    The downloaded zip file contains the weights, index and checkpoints of the trained model.  
+    In order to load it in your code, follow these steps:  
+    1. Download and unzip the files
+    2. Define ```MyModel()``` class in your code
     3. Load the weights using tensorflow
       
     Example:

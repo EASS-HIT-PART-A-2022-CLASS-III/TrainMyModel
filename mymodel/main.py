@@ -13,7 +13,7 @@ BACKEND_URL = os.getenv("BACKEND_URL")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 IMG_DATA_PATH = f"{SHARED_DATA_PATH}/images"
 
-app = fastapi.FastAPI()
+app = fastapi.FastAPI(title="TrainMyModel MyModel", version="0.1.0")
 app.model = None
 app.train_ds = None
 
@@ -65,23 +65,27 @@ async def delete_model():
 
 # predict the class of the data
 @app.post("/model/predict")
-async def predict(file_path :str):
+async def predict(path_to_img :str, classes:List):
+    print(classes)
     if app.model is None:
+
         # try to load from shared volume
-        app.model = services.load_model(SHARED_DATA_PATH)
+        app.model = services.load_model(SHARED_DATA_PATH, len(classes))
         if app.model is None:
             raise fastapi.HTTPException(status_code=400, detail="Model not trained")
 
     # load the image
-    img = tf.keras.utils.load_img(file_path, target_size=(224, 224))
+    img = tf.keras.utils.load_img(path_to_img, target_size=(224, 224))
     img_array = tf.keras.utils.img_to_array(img)
     img_array = tf.expand_dims(img_array, 0)  # Create a batch
 
     predictions = app.model.predict(img_array)
     score = tf.nn.softmax(predictions[0])
 
-    return {
+    pred = {
         "message": "Prediction successful",
-        "class": app.train_ds.class_names[np.argmax(score)],
+        "class": classes[np.argmax(score)],
         "score": 100 * np.max(score),
     }
+    print("*******PRED*******",pred)
+    return pred

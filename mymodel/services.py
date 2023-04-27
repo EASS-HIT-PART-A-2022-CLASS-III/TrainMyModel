@@ -29,10 +29,10 @@ def save_model(model, path: str):
     shutil.make_archive(f"{path}/output/model_weights","zip", f'{path}/model')
 
 
-def load_model(path: str):
+def load_model(path: str, num_classes: int):
     if len(os.listdir(f'{path}/model')) == 0:
         return None
-    model = MyModel()
+    model = MyModel(num_classes)
     model.load_weights(f'{path}/model/final_model')
     return model
 

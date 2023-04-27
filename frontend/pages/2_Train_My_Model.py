@@ -6,11 +6,11 @@ import asyncio
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 
-st.set_page_config(page_title="Train My Model", page_icon="🤖")
+st.set_page_config(page_title="Train My Model", page_icon="🚂")
 
 model_status = httpx.get(f"{BACKEND_URL}/model/status").json()
 if model_status["model_info"]["status"] == "trained":
-    st.warning("Model already trained")
+    st.error("Model already trained")
     st.write("Check model page for info")
     st.stop()
 if model_status["model_info"]["status"] == "training":

@@ -10,7 +10,7 @@ SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 color = ['blue','red','green','yellow','purple','white','orange']
 
 
-st.set_page_config(page_title="My Classes", page_icon="")
+st.set_page_config(page_title="My Classes", page_icon="🐕‍🦺")
 st.title("Model Classes")
 
 if "add_class" in st.session_state and st.session_state["add_class"]:

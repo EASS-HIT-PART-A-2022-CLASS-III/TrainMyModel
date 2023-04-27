@@ -5,10 +5,19 @@ import shutil
 import os
 import httpx
 import datetime
+from pydantic import BaseModel
+
+
+############ DATA CLASS ############
+
+class DataClass(BaseModel):
+    name: str
+    samples: int
+
 
 ############ APP INIT ############
 
-app = FastAPI()
+app = FastAPI(title="TrainMyModel Backend", version="0.1.0")
 
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 MYMODEL_URL = os.getenv("MYMODEL_URL")
@@ -22,7 +31,7 @@ def init_data():
     
     # init model status
     app.model_status = {
-        "data": {},
+        "data": [],
         "model_info": {
             "status": "not trained",
             "train_params": None,
@@ -38,7 +47,8 @@ def init_data():
     cls = os.listdir(f"{SHARED_DATA_PATH}/images")
     if len(cls) > 0:
         for folder in cls:
-            app.model_status["data"][folder] = len(os.listdir(f"{SHARED_DATA_PATH}/images/{folder}"))
+            samples = len(os.listdir(f"{SHARED_DATA_PATH}/images/{folder}"))
+            app.model_status["data"].append(DataClass(name=folder, samples=samples))
 
 ############ ROUTES ############
 
@@ -47,7 +57,7 @@ async def root():
     return {"message": "Backend is running"}
 
 
-########## CLASSES MANAGEMENT ROUTES ##########
+########## CLASS MANAGEMENT ROUTES ##########
 
 @app.get("/model/classes")
 async def get_classes():
@@ -60,6 +70,12 @@ async def add_class(label: str, number_of_images: int):
     os.makedirs(f"{SHARED_DATA_PATH}/images/{label}", exist_ok=True)
 
     # add class to model status
+    for data_class in app.model_status["data"]:
+        if data_class.name == label:
+            data_class.samples += number_of_images
+    
+
+
     if label not in app.model_status["data"]:
         app.model_status["data"][label] = number_of_images
     else:
@@ -156,19 +172,26 @@ async def delete_model():
     return {"message": "Model deleted successfully"}
 
 @app.post("/model/predict")
-async def predict(file : UploadFile = File(...)):
+async def predict(file : UploadFile= File(...)):
     # save file to shared folder
     filename = file.filename
+    
     path = f"{SHARED_DATA_PATH}/output/{filename}"
+    content = await file.read()
     with open(path, 'wb') as f:
-        content = await file.read()
         f.write(content)
-
+    
     # send to model service
     async with httpx.AsyncClient() as client:
         eval = await client.post(
-            f"{MYMODEL_URL}/model/predict", params={'filename':filename}, timeout=None
+            f"{MYMODEL_URL}/model/predict", params={'path_to_img':path, 'classes': list(app.model_status['data'].keys())}, timeout=None
         )
         
     return eval
 
+@app.post("/upload-image/")
+async def upload_image(image: UploadFile = File(...)):
+    contents = await image.read()
+    with open(image.filename, "wb") as f:
+        f.write(contents)
+    return {"filename": image.filename}
