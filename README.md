@@ -5,7 +5,7 @@ Using CNN deep learning model (resnet-v2), the app can be used to train a model 
 The app is built using Streamlit and FastAPI in Docker.  
 
 ## How to download
-1. Clone the repository to ypur local machine.
+1. Clone the repository to your local machine.
 2. Make sure Docker is running.
 3. Run from the directory ```docker-compose up```.
 4. Go to ```localhost:8000``` and start training.
