@@ -20,5 +20,3 @@ st.markdown(
     4. Download the model - if you want 😎.
     """
 )
-
-

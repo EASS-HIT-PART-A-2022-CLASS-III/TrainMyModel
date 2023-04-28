@@ -28,7 +28,8 @@ else:
     st.markdown("**Model is trained!**")
     st.markdown("Now you can predict with it or train it again!")
     st.divider()
-    st.markdown("""
+    st.markdown(
+        """
     ##### **Download the model**  
     The downloaded zip file contains the weights, index and checkpoints of the trained model.  
     In order to load it in your code, follow these steps:  
@@ -41,13 +42,13 @@ else:
     model = MyModel()
     model.load_weights(f'path/to/model/final_model')
     ```
-    """)
+    """
+    )
 
-    with open(f'{SHARED_DATA_PATH}/output/model_weights.zip','rb') as file:
-        download_btn = st.download_button(label="Download weights",
-                            data=file,
-                            file_name="model_weights.zip"
-                          )
+    with open(f"{SHARED_DATA_PATH}/output/model_weights.zip", "rb") as file:
+        download_btn = st.download_button(
+            label="Download weights", data=file, file_name="model_weights.zip"
+        )
 
     st.divider()
     st.markdown("##### **Model information:**")
@@ -59,7 +60,3 @@ else:
         res = httpx.get(f"{BACKEND_URL}/model/delete")
         st.session_state["model deleted"] = True
         st.experimental_rerun()
-        
-
-
-

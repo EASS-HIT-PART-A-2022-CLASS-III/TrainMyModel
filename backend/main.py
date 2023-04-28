@@ -1,12 +1,10 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
-
-# from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from typing import List
+import httpx
 import shutil
 import os
-import httpx
 import datetime
-from pydantic import BaseModel
 
 
 ############ DATA CLASS ############
@@ -54,8 +52,8 @@ def init_data():
             app.model_status["data"].append(DataClass(name=folder, samples=samples))
 
 
-############ ROUTES ############
 
+############ ROUTES ############
 
 @app.get("/")
 async def root():
@@ -63,6 +61,9 @@ async def root():
 
 
 ########## CLASS MANAGEMENT ROUTES ##########
+# CRUD operations for classes management
+# All classes are stored in shared volume
+# app.model_status['data'] is used to keep track of classes and is updated when a class is added, updated or deleted
 
 
 @app.get("/model/classes")
@@ -84,32 +85,35 @@ async def add_class(label: str, number_of_images: int):
     else:
         app.model_status["data"].append(DataClass(name=label, samples=number_of_images))
 
-    # if label not in app.model_status["data"]:
-    #     app.model_status["data"][label] = number_of_images
-    # else:
-    #     app.model_status["data"][label] += number_of_images
-
     return {"message": f"Class {label} added {number_of_images} images successfully"}
 
 
 @app.post("/model/classes/update")
 async def update_class(oldlabel: str, newlabel: str):
     # check if class exists
-    if oldlabel not in app.model_status["data"]:
+    exists = False
+    for data_class in app.model_status["data"]:
+        if data_class.name == newlabel:
+            raise HTTPException(
+                status_code=400, detail="Can't rename to an existing class"
+            )
+        if data_class.name == oldlabel:
+            exists = True
+
+    if not exists:
         raise HTTPException(status_code=400, detail="Class not found")
-    else:
-        # update class name in model status
 
-        for data_class in app.model_status["data"]:
-            if data_class.name == oldlabel:
-                data_class.name = newlabel
-                break
+    # update class name in model status
+    for data_class in app.model_status["data"]:
+        if data_class.name == oldlabel:
+            data_class.name = newlabel
+            break
 
-        # update class name in shared volume
-        os.rename(
-            os.path.join(f"{SHARED_DATA_PATH}/images/", oldlabel),
-            os.path.join(f"{SHARED_DATA_PATH}/images/", newlabel),
-        )
+    # update class name in shared volume
+    os.rename(
+        os.path.join(f"{SHARED_DATA_PATH}/images/", oldlabel),
+        os.path.join(f"{SHARED_DATA_PATH}/images/", newlabel),
+    )
 
     return {"message": f"Class {oldlabel} changed to {newlabel} successfully"}
 
@@ -117,17 +121,21 @@ async def update_class(oldlabel: str, newlabel: str):
 @app.post("/model/classes/delete")
 async def delete_class(label: str):
     # check if class exists
-    if label not in app.model_status["data"]:
+    exists = False
+    for data_class in app.model_status["data"]:
+        if data_class.name == label:
+            exists = True
+    if not exists:
         raise HTTPException(status_code=400, detail="Class not found")
-    else:
-        # delete class from model status
-        for data_class in app.model_status["data"]:
-            if data_class.name == label:
-                app.model_status["data"].remove(data_class)
-                break
 
-        # delete class from shared volume
-        shutil.rmtree(f"{SHARED_DATA_PATH}/images/{label}", ignore_errors=True)
+    # delete class from model status
+    for data_class in app.model_status["data"]:
+        if data_class.name == label:
+            app.model_status["data"].remove(data_class)
+            break
+
+    # delete class from shared volume
+    shutil.rmtree(f"{SHARED_DATA_PATH}/images/{label}", ignore_errors=True)
 
     return {"message": f"Class {label} deleted successfully"}
 
@@ -144,27 +152,40 @@ async def get_status():
 async def train(batch_size: int, epochs: int):
     # check training parameters
     if batch_size <= 0:
-        raise HTTPException(status_code=400, detail="Batch size cannot be less than or equal to 0")
+        raise HTTPException(
+            status_code=400, detail="Batch size cannot be less than or equal to 0"
+        )
     if epochs <= 0:
-        raise HTTPException(status_code=400, detail="Epochs cannot be less than or equal to 0")
+        raise HTTPException(
+            status_code=400, detail="Epochs cannot be less than or equal to 0"
+        )
     if len(os.listdir(f"{SHARED_DATA_PATH}/images")) == 0:
         raise HTTPException(status_code=400, detail="No classes found")
 
     # update model status
     app.model_status["model_info"]["status"] = "training"
-    app.model_status["model_info"]["train_params"] = {"batch_size": batch_size, "epochs": epochs}
-    app.model_status["model_info"]["start_time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    app.model_status["model_info"]["train_params"] = {
+        "batch_size": batch_size,
+        "epochs": epochs,
+    }
+    app.model_status["model_info"]["start_time"] = datetime.datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
 
     # strat training in model service
     async with httpx.AsyncClient() as client:
         res = await client.get(
-            f"{MYMODEL_URL}/model/train", params=app.model_status["model_info"]["train_params"], timeout=None
+            f"{MYMODEL_URL}/model/train",
+            params=app.model_status["model_info"]["train_params"],
+            timeout=None,
         )
     res = res.json()
 
     # update model status
     app.model_status["model_info"]["status"] = "trained"
-    app.model_status["model_info"]["end_time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    app.model_status["model_info"]["end_time"] = datetime.datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
     app.model_status["model_info"]["train_size"] = res["train_size"]
     app.model_status["model_info"]["val_size"] = res["val_size"]
     app.model_status["model_info"]["evaluation"] = res["eval"]
@@ -198,24 +219,14 @@ async def predict(file: UploadFile = File(...)):
     content = await file.read()
     with open(path, "wb") as f:
         f.write(content)
-    print(app.model_status["data"])
-    print(
-        f"{MYMODEL_URL}/model/predict",
-    )
+    classes = [cls.name for cls in app.model_status["data"]]
+
     # send to model service
     async with httpx.AsyncClient() as client:
         eval = await client.post(
             f"{MYMODEL_URL}/model/predict",
-            data={"path_to_img": path, "classes": app.model_status["data"]},
+            json={"path_to_img": path, "classes": classes},
             timeout=None,
         )
 
-    return eval
-
-
-# @app.post("/upload-image/")
-# async def upload_image(image: UploadFile = File(...)):
-#     contents = await image.read()
-#     with open(image.filename, "wb") as f:
-#         f.write(contents)
-#     return {"filename": image.filename}
+    return eval.json()

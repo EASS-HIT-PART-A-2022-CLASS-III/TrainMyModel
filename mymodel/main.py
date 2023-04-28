@@ -8,12 +8,15 @@ import services
 import os
 import numpy as np
 from pydantic import BaseModel
+import json
 
 ############ DATA CLASS ############
+
 
 class DataClass(BaseModel):
     name: str
     samples: int
+
 
 ############ MYMODEL INIT ############
 
@@ -28,6 +31,7 @@ app.train_ds = None
 
 ############ ROUTES ############
 
+
 @app.get("/")
 async def root():
     return {"message": "model is running"}
@@ -36,13 +40,12 @@ async def root():
 # train the model
 @app.get("/model/train", response_model=None)
 async def train(batch_size: int, epochs: int):
-    
     app.train_ds, app.val_ds = services.get_datasets(IMG_DATA_PATH, batch_size)
 
     app.model = MyModel(len(app.train_ds.class_names))
 
     history = services.train_model(app.model, app.train_ds, app.val_ds, epochs)
-    
+
     # find the best epoch accuracy
     best_index = np.argmax(history.history["val_accuracy"])
     acc = history.history["accuracy"][best_index]
@@ -59,12 +62,14 @@ async def train(batch_size: int, epochs: int):
         "loss": loss,
         "val_loss": val_loss,
     }
-    
+
     return {
+        "message": "Model trained successfully",
         "train_size": len(app.train_ds.file_paths),
-             "val_size": len(app.val_ds.file_paths),
-               "eval": eval
-               }
+        "val_size": len(app.val_ds.file_paths),
+        "eval": eval,
+    }
+
 
 @app.get("/model/delete")
 async def delete_model():
@@ -75,10 +80,13 @@ async def delete_model():
 
 # predict the class of the data
 @app.post("/model/predict")
-async def predict(path_to_img :str, classes:List[DataClass]):
-    print(classes)
-    if app.model is None:
+async def predict(request: fastapi.Request):
+    data = await request.body()
+    path_to_img: str = json.loads(data)["path_to_img"]
+    classes = json.loads(data)["classes"]
+    classes.sort()
 
+    if app.model is None:
         # try to load from shared volume
         app.model = services.load_model(SHARED_DATA_PATH, len(classes))
         if app.model is None:
@@ -94,8 +102,9 @@ async def predict(path_to_img :str, classes:List[DataClass]):
 
     pred = {
         "message": "Prediction successful",
-        "class": classes[np.argmax(score)],
-        "score": 100 * np.max(score),
+        "prediction": classes[np.argmax(score)],
+        "confidence": 100 * np.max(score),
+        "argmax": int(np.argmax(score)),
     }
-    print("*******PRED*******",pred)
+
     return pred

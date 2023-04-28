@@ -28,17 +28,19 @@ results = st.container()
 
 async def make_request():
     async with httpx.AsyncClient() as client:
-        res = await client.post(f"{BACKEND_URL}/model/train",
-                           params={"batch_size": batch_size, "epochs": epochs},
-                           timeout=None)  # Set timeout to None to disable it
+        res = await client.post(
+            f"{BACKEND_URL}/model/train",
+            params={"batch_size": batch_size, "epochs": epochs},
+            timeout=None,
+        )  # Set timeout to None to disable it
         return res  # Close the connection immediately
-        
+
 
 if train_btn:
     with st.spinner("Model Training in Progress"):
         res = asyncio.run(make_request())
-    
+
     results.write(res.text)
     results.write("Check model page for info")
 
-# if 
+# if

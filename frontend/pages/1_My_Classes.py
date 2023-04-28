@@ -7,7 +7,7 @@ from PIL import Image
 BACKEND_URL = os.getenv("BACKEND_URL")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 
-color = ['blue', 'green', 'orange', 'red', 'violet']
+color = ["blue", "green", "orange", "red", "violet"]
 
 
 st.set_page_config(page_title="My Classes", page_icon="🐕‍🦺")
@@ -41,7 +41,7 @@ else:
     tabs = st.tabs(all_classes)
 
     for i, (gold_label, img_count) in enumerate(all_classes.items()):
-        _, col1,col2,_ = tabs[i].columns(4)
+        _, col1, col2, _ = tabs[i].columns(4)
         with col1:
             st.markdown("#### **Class:**")
             st.markdown("#### **Samples:**")
@@ -77,17 +77,17 @@ else:
                     st.session_state["delete_class"] = True
                     st.experimental_rerun()
         img_samples = tabs[i].expander("Image samples")
-        
+
         img_path = f"{SHARED_DATA_PATH}/images"
         img_list = os.listdir(f"{img_path}/{gold_label}")
 
-        cols=img_samples.columns(3)
+        cols = img_samples.columns(3)
         for col in cols:
             with col:
                 img = random.choice(img_list)
                 img_list.remove(img)
                 img = Image.open(f"{img_path}/{gold_label}/{img}")
-                img = img.resize((200,200))
+                img = img.resize((200, 200))
                 col.image(img)
 st.divider()
 #
