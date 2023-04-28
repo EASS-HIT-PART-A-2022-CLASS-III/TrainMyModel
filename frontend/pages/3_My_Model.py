@@ -55,8 +55,14 @@ else:
     expander = st.expander("Open for info")
     expander.write(status)
     st.divider()
-    st.warning("Training again will reset the model")
-    if st.button("I want to train again"):
+    st.markdown("##### **Reset the model**")
+    st.markdown("""
+    If you wish to reset the model and train it again, click the button below.  
+    **This will delete only the model, and not the classes**.
+
+    """)
+    st.warning("This is an irreversible action")
+    if st.button("Reset my model"):
         res = httpx.get(f"{BACKEND_URL}/model/delete")
         st.session_state["model deleted"] = True
         st.experimental_rerun()

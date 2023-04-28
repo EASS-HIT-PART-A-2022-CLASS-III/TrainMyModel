@@ -36,14 +36,18 @@ app.train_ds = None
 async def root():
     return {"message": "model is running"}
 
+@app.get("/model/load")
+async def load_model(num_classes: int):
+    app.model = services.load_model(SHARED_DATA_PATH, num_classes)
+    return {"message": "model loaded successfully"}
 
 # train the model
 @app.get("/model/train", response_model=None)
-async def train(batch_size: int, epochs: int):
+async def train(batch_size: int, epochs: int, optimizer:str, loss: str,learning_rate: float, momentum: float, ):
     app.train_ds, app.val_ds = services.get_datasets(IMG_DATA_PATH, batch_size)
 
     app.model = MyModel(len(app.train_ds.class_names))
-
+    services.compile_model(app.model,optimizer=optimizer, loss=loss, lr=learning_rate, momentum=momentum)
     history = services.train_model(app.model, app.train_ds, app.val_ds, epochs)
 
     # find the best epoch accuracy

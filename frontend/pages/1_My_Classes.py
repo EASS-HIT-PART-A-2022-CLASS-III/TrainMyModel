@@ -2,6 +2,7 @@ import streamlit as st
 import httpx
 import os
 import random
+import asyncio
 from PIL import Image
 
 BACKEND_URL = os.getenv("BACKEND_URL")
@@ -9,6 +10,13 @@ SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 
 color = ["blue", "green", "orange", "red", "violet"]
 
+async def send_request(gold_label):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+                        f"{BACKEND_URL}/classes/delete",
+                        params={"label": gold_label},
+                    )
+    return response
 
 st.set_page_config(page_title="My Classes", page_icon="🐕‍🦺")
 st.title("Model Classes")
@@ -24,23 +32,22 @@ if "edit_class" in st.session_state and st.session_state["edit_class"]:
     st.session_state["edit_class"] = False
 
 
-all_classes = httpx.get(f"{BACKEND_URL}/model/classes")
+all_classes = httpx.get(f"{BACKEND_URL}/classes")
 all_classes = all_classes.json()
 
 if len(all_classes) == 0:
     st.info("No classes found")
 
 else:
-    # Show the classes in tabs
     # sort the dict
-    keys = list(all_classes.keys())
-    keys.sort()
-    all_classes = {k: all_classes[k] for k in keys}
+    all_classes = sorted(all_classes, key=lambda x: x["name"])
 
-    # all_classes = sorted(all_classes)
-    tabs = st.tabs(all_classes)
+    # Show the classes in tabs
+    tabs = st.tabs([data_class["name"] for data_class in all_classes])
 
-    for i, (gold_label, img_count) in enumerate(all_classes.items()):
+    for i, data_class in enumerate(all_classes):
+        gold_label = data_class["name"]
+        img_count = data_class["samples"]
         _, col1, col2, _ = tabs[i].columns(4)
         with col1:
             st.markdown("#### **Class:**")
@@ -59,7 +66,7 @@ else:
                 if st.button("Save new label", key=f"save_new_label_{i}"):
                     # edit the class
                     res = httpx.post(
-                        f"{BACKEND_URL}/model/classes/update",
+                        f"{BACKEND_URL}/classes/update",
                         params={"oldlabel": gold_label, "newlabel": newlabel},
                     )
                     st.session_state["edit_class"] = True
@@ -70,18 +77,18 @@ else:
                 delete_btn = st.button("Delete Class", key=f"delete_class_{i}")
                 if delete_btn:
                     # delete the class
-                    res = httpx.post(
-                        f"{BACKEND_URL}/model/classes/delete",
-                        params={"label": gold_label},
-                    )
+                    res = asyncio.run(send_request(gold_label))
                     st.session_state["delete_class"] = True
                     st.experimental_rerun()
+                    
+
         img_samples = tabs[i].expander("Image samples")
 
         img_path = f"{SHARED_DATA_PATH}/images"
         img_list = os.listdir(f"{img_path}/{gold_label}")
 
         cols = img_samples.columns(3)
+
         for col in cols:
             with col:
                 img = random.choice(img_list)
@@ -89,6 +96,8 @@ else:
                 img = Image.open(f"{img_path}/{gold_label}/{img}")
                 img = img.resize((200, 200))
                 col.image(img)
+                if len(img_list) == 0:
+                    break
 st.divider()
 #
 st.write("Add a class to the model:")
@@ -101,13 +110,15 @@ if st.button("Add Class"):
         st.error("Data cannot be empty")
     else:
         # save the images in shared volume
+        print(f"{SHARED_DATA_PATH}/images/{label}")
         os.makedirs(f"{SHARED_DATA_PATH}/images/{label}", exist_ok=True)
+        print(os.listdir(f"{SHARED_DATA_PATH}/images/{label}"))
         for img in data:
             img_file = Image.open(img)
             img_file.save(f"{SHARED_DATA_PATH}/images/{label}/{img.name}")
-
+        print(os.listdir(f"{SHARED_DATA_PATH}/images/{label}"))
         res = httpx.post(
-            f"{BACKEND_URL}/model/classes/add",
+            f"{BACKEND_URL}/classes/add",
             params={"label": label, "number_of_images": len(data)},
         )
         # refresh the page
