@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.testclient import TestClient
 from pydantic import BaseModel
 from typing import List
 import httpx
@@ -23,14 +24,12 @@ app = FastAPI(title="TrainMyModel Backend", version="0.1.0")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 MYMODEL_URL = os.getenv("MYMODEL_URL")
 
-
 @app.on_event("startup")
 def init_data():
     # create shared volume folders
     os.makedirs(f"{SHARED_DATA_PATH}/images", exist_ok=True)
     os.makedirs(f"{SHARED_DATA_PATH}/model", exist_ok=True)
     os.makedirs(f"{SHARED_DATA_PATH}/output", exist_ok=True)
-
 
     # init model status
     app.model_status = {
@@ -59,10 +58,13 @@ def init_data():
             app.model_status = json.loads(f.read())
         
     
-# @app.on_event("shutdown")
-# def shutdown():
-    # delete output folder
-    # shutil.rmtree(f"{SHARED_DATA_PATH}/output")
+@app.on_event("shutdown")
+def shutdown():
+    # delete output folder content on shutdown
+    # besides model_weights.zip, which is used by mymodel service
+    for filename in os.listdir(f"{SHARED_DATA_PATH}/output"):
+        if filename != "model_weights.zip":
+            os.remove(f"{SHARED_DATA_PATH}/output/{filename}")
 
 
 
@@ -78,12 +80,10 @@ async def root():
 # All classes are stored in shared volume
 # app.model_status['data'] is used to keep track of classes and is updated when a class is added, updated or deleted
 
-
 @app.get("/classes")
 async def get_classes():
     # cls_names = {cls.name: cls.samples for cls in app.model_status["data"]}
     return app.model_status["data"]
-
 
 @app.post("/classes/add")
 async def add_class(label: str, number_of_images: int):
@@ -99,7 +99,6 @@ async def add_class(label: str, number_of_images: int):
         app.model_status["data"].append({'name':label, 'samples':number_of_images})
 
     return {"message": f"Class {label} added {number_of_images} images successfully"}
-
 
 @app.post("/classes/update")
 async def update_class(oldlabel: str, newlabel: str):
@@ -129,7 +128,6 @@ async def update_class(oldlabel: str, newlabel: str):
     )
     return {"message": f"Class {oldlabel} changed to {newlabel} successfully"}
 
-
 @app.post("/classes/delete")
 async def delete_class(label: str):
     # check if class exists
@@ -157,11 +155,9 @@ async def delete_class(label: str):
 # The model is trained in mymodel service
 # app.model_status['model_info'] is used to keep track of the model and its status
 
-
 @app.get("/model/status")
 async def get_status():
     return app.model_status
-
 
 @app.post("/model/train")
 async def train(batch_size: int, epochs: int, optimizer:str, learning_rate: float, momentum:float, loss: str):
@@ -217,7 +213,6 @@ async def train(batch_size: int, epochs: int, optimizer:str, learning_rate: floa
 
     return {"message": "Model training finished"}
 
-
 @app.get("/model/delete")
 async def delete_model():
     # send to mymodel service
@@ -234,7 +229,6 @@ async def delete_model():
     app.model_status["model_info"]["evaluation"] = None
 
     return {"message": "Model deleted successfully"}
-
 
 @app.post("/model/predict")
 async def predict(file: UploadFile = File(...)):
@@ -255,3 +249,50 @@ async def predict(file: UploadFile = File(...)):
         )
 
     return eval.json()
+
+
+############ PYTESTS TESTS ############
+# Testing the CRUD operations for classes management
+# Using 'with TestClient' to test the environment variables in the app
+
+def test_root():
+    with TestClient(app) as client:
+        response = client.get("/")
+        assert response.status_code == 200
+        assert response.json() == {"message": "Backend is running"}
+
+def test_get_classes():
+    with TestClient(app) as client:
+        response = client.get("/classes")
+        assert response.status_code == 200
+        assert response.json() == []
+        
+
+def test_add_class():
+    with TestClient(app) as client:
+        response = client.post(
+            "/classes/add", params={"label": "test", "number_of_images": 5}
+        )
+        assert response.status_code == 200
+        assert response.json() == {"message": "Class test added 5 images successfully"}
+
+def test_update_class():
+    with TestClient(app) as client:
+        response = client.post(
+            "/classes/update", params={"oldlabel": "test", "newlabel": "test2"}
+        )
+        assert response.status_code == 200
+        assert response.json() == {"message": "Class test changed to test2 successfully"}
+
+def test_get_classes_after_update():
+    with TestClient(app) as client:
+        response = client.get("/classes")
+        assert response.status_code == 200
+        assert {"name":"test", 'samples': 0} not in response.json()
+        assert {"name":"test2", 'samples': 0} in response.json()
+
+def test_delete_class():
+    with TestClient(app) as client:
+        response = client.post("/classes/delete", params={"label": "test2"})
+        assert response.status_code == 200
+        assert response.json() == {"message": "Class test2 deleted successfully"}
