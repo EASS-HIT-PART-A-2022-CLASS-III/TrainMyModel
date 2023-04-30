@@ -3,10 +3,11 @@ fastapi
 uvicorn[standard]
 pydantic
 httpx
+pillow
 
 # for ML model
 tensorflow_hub
 
 # for plot_model
-# pydot
+pydot
 # graphviz

@@ -245,7 +245,7 @@ async def predict(file: UploadFile = File(...)):
     content = await file.read()
     with open(path, "wb") as f:
         f.write(content)
-    classes = [cls.name for cls in app.model_status["data"]]
+    classes = [cls['name'] for cls in app.model_status["data"]]
 
     # send to model service
     async with httpx.AsyncClient() as client:
