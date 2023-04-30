@@ -1,3 +1,8 @@
+# Jupiter Notebook
 *.ipynb
-PetImages/*
+
+# Python cache
 *.pyc
+
+# Data examples
+PetImages/*

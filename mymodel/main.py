@@ -1,21 +1,10 @@
 from model import MyModel
-from typing import List
 import tensorflow as tf
-from keras import layers
 import fastapi
-import httpx
 import services
 import os
 import numpy as np
-from pydantic import BaseModel
 import json
-
-############ DATA CLASS ############
-
-
-class DataClass(BaseModel):
-    name: str
-    samples: int
 
 
 ############ MYMODEL INIT ############
@@ -31,17 +20,17 @@ app.train_ds = None
 
 ############ ROUTES ############
 
-
 @app.get("/")
 async def root():
     return {"message": "model is running"}
 
+# load the model from shared folder if exists
 @app.get("/model/load")
 async def load_model(num_classes: int):
     app.model = services.load_model(SHARED_DATA_PATH, num_classes)
     return {"message": "model loaded successfully"}
 
-# train the model
+# train the model using given parameters and save it to shared folder
 @app.get("/model/train", response_model=None)
 async def train(batch_size: int, epochs: int, optimizer:str, loss: str,learning_rate: float, momentum: float, ):
     app.train_ds, app.val_ds = services.get_datasets(IMG_DATA_PATH, batch_size)

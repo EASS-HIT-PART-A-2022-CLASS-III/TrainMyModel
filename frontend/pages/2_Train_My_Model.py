@@ -1,7 +1,6 @@
 import os
 import streamlit as st
 import httpx
-import time
 import asyncio
 
 BACKEND_URL = os.getenv("BACKEND_URL")

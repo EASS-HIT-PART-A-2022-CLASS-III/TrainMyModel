@@ -1,21 +1,10 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.testclient import TestClient
-from pydantic import BaseModel
-from typing import List
 import httpx
 import shutil
 import os
 import datetime
 import json
-
-
-############ DATA CLASS ############
-
-
-# class DataClass(BaseModel):
-#     name: str
-#     samples: int
-
 
 ############ APP INIT ############
 

@@ -1,7 +1,7 @@
 import streamlit as st
 import httpx
 import os
-import shutil
+
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
