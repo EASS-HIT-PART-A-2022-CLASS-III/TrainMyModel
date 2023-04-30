@@ -12,3 +12,4 @@ This is a service that performs compiling, training and prediction on an image c
 *SHARED_VOLUME* should be the path to the shared volume where the images will be stored.   
 *BACKEND_URL* should be the URL of the backend service. 
 4. Run the service by running ```uvicorn app:app --reload```.
+

@@ -20,9 +20,11 @@ app.train_ds = None
 
 ############ ROUTES ############
 
+
 @app.get("/")
 async def root():
     return {"message": "model is running"}
+
 
 # load the model from shared folder if exists
 @app.get("/model/load")
@@ -30,13 +32,23 @@ async def load_model(num_classes: int):
     app.model = services.load_model(SHARED_DATA_PATH, num_classes)
     return {"message": "model loaded successfully"}
 
+
 # train the model using given parameters and save it to shared folder
 @app.get("/model/train", response_model=None)
-async def train(batch_size: int, epochs: int, optimizer:str, loss: str,learning_rate: float, momentum: float, ):
+async def train(
+    batch_size: int,
+    epochs: int,
+    optimizer: str,
+    loss: str,
+    learning_rate: float,
+    momentum: float,
+):
     app.train_ds, app.val_ds = services.get_datasets(IMG_DATA_PATH, batch_size)
 
     app.model = MyModel(len(app.train_ds.class_names))
-    services.compile_model(app.model,optimizer=optimizer, loss=loss, lr=learning_rate, momentum=momentum)
+    services.compile_model(
+        app.model, optimizer=optimizer, loss=loss, lr=learning_rate, momentum=momentum
+    )
     history = services.train_model(app.model, app.train_ds, app.val_ds, epochs)
 
     # find the best epoch accuracy
@@ -56,11 +68,18 @@ async def train(batch_size: int, epochs: int, optimizer:str, loss: str,learning_
         "val_loss": val_loss,
     }
 
+    stringlist = []
+    # sub = subclass()
+    # sub.summary(print_fn=lambda x: stringlist.append(x))
+    app.model.model().summary(print_fn=lambda x: stringlist.append(x))
+    model_summary = '\n'.join(stringlist)
+
     return {
         "message": "Model trained successfully",
         "train_size": len(app.train_ds.file_paths),
         "val_size": len(app.val_ds.file_paths),
         "eval": eval,
+        "summary": model_summary,
     }
 
 

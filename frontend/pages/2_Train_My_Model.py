@@ -24,11 +24,21 @@ epochs = st.slider("Epochs", 5, 25, 10)
 optimizer = st.selectbox("Optimizer", ["Adam", "SGD", "RMSprop", "Adagrad", "Adadelta"])
 
 momentum = 0
-learning_rate = st.selectbox("Learning Rate", [0.1,0.01,0.001,0.0001,0.00001], index=2)
+learning_rate = st.selectbox(
+    "Learning Rate", [0.1, 0.01, 0.001, 0.0001, 0.00001], index=2
+)
 if optimizer in ["SGD", "RMSprop"]:
-    momentum = st.number_input("Momentum", min_value=0.0, max_value=1.0, value=0.9, step=0.1)
+    momentum = st.number_input(
+        "Momentum", min_value=0.0, max_value=1.0, value=0.9, step=0.1
+    )
 
-loss = st.selectbox("Loss", ["Sparse Categorical Crossentropy", "Mean Squared Error",])
+loss = st.selectbox(
+    "Loss",
+    [
+        "Sparse Categorical Crossentropy",
+        "Mean Squared Error",
+    ],
+)
 
 st.write("Click the button below to start training")
 
@@ -40,10 +50,17 @@ async def make_request():
     async with httpx.AsyncClient() as client:
         res = await client.post(
             f"{BACKEND_URL}/model/train",
-            params={"batch_size": batch_size, "epochs": epochs, "optimizer": optimizer, "learning_rate": learning_rate, "momentum":momentum, "loss": loss},
+            params={
+                "batch_size": batch_size,
+                "epochs": epochs,
+                "optimizer": optimizer,
+                "learning_rate": learning_rate,
+                "momentum": momentum,
+                "loss": loss,
+            },
             timeout=None,
-        )  
-        return res  
+        )
+        return res
 
 
 if train_btn:

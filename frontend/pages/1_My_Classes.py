@@ -10,13 +10,15 @@ SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 
 color = ["blue", "green", "orange", "red", "violet"]
 
+
 async def send_request(gold_label):
     async with httpx.AsyncClient() as client:
         response = await client.post(
-                        f"{BACKEND_URL}/classes/delete",
-                        params={"label": gold_label},
-                    )
+            f"{BACKEND_URL}/classes/delete",
+            params={"label": gold_label},
+        )
     return response
+
 
 st.set_page_config(page_title="My Classes", page_icon="🐕‍🦺")
 st.title("Model Classes")
@@ -80,7 +82,6 @@ else:
                     res = asyncio.run(send_request(gold_label))
                     st.session_state["delete_class"] = True
                     st.experimental_rerun()
-                    
 
         img_samples = tabs[i].expander("Image samples")
 

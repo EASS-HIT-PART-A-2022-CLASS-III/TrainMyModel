@@ -40,10 +40,12 @@ def fill_results(new_sample, response):
     col1, col2 = results.columns(2)
     col1.markdown("<br><br>", unsafe_allow_html=True)
     sep = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-    col1.markdown(f"""
+    col1.markdown(
+        f"""
         ### **Prediction**:{sep}:{color[argmax]}[{prediction}]
         #### **Confidence**:{sep}:{color[argmax]}[{str(confidence)[:5]}]
-    """)
+    """
+    )
     img = Image.open(new_sample)
     img = img.resize((224, 224))
     col2.image(

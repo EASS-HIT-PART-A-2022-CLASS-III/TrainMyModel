@@ -13,6 +13,7 @@ app = FastAPI(title="TrainMyModel Backend", version="0.1.0")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 MYMODEL_URL = os.getenv("MYMODEL_URL")
 
+
 @app.on_event("startup")
 def init_data():
     # create shared volume folders
@@ -31,6 +32,7 @@ def init_data():
             "start_time": None,
             "end_time": None,
             "evaluation": None,
+            "summary": None,
         },
     }
 
@@ -39,14 +41,14 @@ def init_data():
     if len(cls) > 0:
         for folder in cls:
             samples = len(os.listdir(f"{SHARED_DATA_PATH}/images/{folder}"))
-            app.model_status["data"].append({'name':folder, 'samples':samples})
+            app.model_status["data"].append({"name": folder, "samples": samples})
 
     # load model from shared folder
     if os.path.isfile(f"{SHARED_DATA_PATH}/model/model_status.json"):
         with open(f"{SHARED_DATA_PATH}/model/model_status.json", "r") as f:
             app.model_status = json.loads(f.read())
-        
-    
+
+
 @app.on_event("shutdown")
 def shutdown():
     # delete output folder content on shutdown
@@ -56,8 +58,8 @@ def shutdown():
             os.remove(f"{SHARED_DATA_PATH}/output/{filename}")
 
 
-
 ############ ROUTES ############
+
 
 @app.get("/")
 async def root():
@@ -69,10 +71,12 @@ async def root():
 # All classes are stored in shared volume
 # app.model_status['data'] is used to keep track of classes and is updated when a class is added, updated or deleted
 
+
 @app.get("/classes")
 async def get_classes():
     # cls_names = {cls.name: cls.samples for cls in app.model_status["data"]}
     return app.model_status["data"]
+
 
 @app.post("/classes/add")
 async def add_class(label: str, number_of_images: int):
@@ -81,34 +85,34 @@ async def add_class(label: str, number_of_images: int):
 
     # add class to model status
     for data_class in app.model_status["data"]:
-        if data_class['name'] == label:
-            data_class['samples'] += number_of_images
+        if data_class["name"] == label:
+            data_class["samples"] += number_of_images
             break
     else:
-        app.model_status["data"].append({'name':label, 'samples':number_of_images})
+        app.model_status["data"].append({"name": label, "samples": number_of_images})
 
     return {"message": f"Class {label} added {number_of_images} images successfully"}
+
 
 @app.post("/classes/update")
 async def update_class(oldlabel: str, newlabel: str):
     # check if class exists
     current_class = None
     for data_class in app.model_status["data"]:
-        if data_class['name'] == newlabel:
+        if data_class["name"] == newlabel:
             raise HTTPException(
                 status_code=400, detail="Can't rename to an existing class"
             )
-        if data_class['name'] == oldlabel:
+        if data_class["name"] == oldlabel:
             current_class = data_class
-            
+
             break
 
     if not current_class:
         raise HTTPException(status_code=400, detail="Class not found")
 
     # update class name in model status
-    current_class['name'] = newlabel
-    
+    current_class["name"] = newlabel
 
     # update class name in shared volume
     os.rename(
@@ -117,12 +121,13 @@ async def update_class(oldlabel: str, newlabel: str):
     )
     return {"message": f"Class {oldlabel} changed to {newlabel} successfully"}
 
+
 @app.post("/classes/delete")
 async def delete_class(label: str):
     # check if class exists
     current_class = None
     for data_class in app.model_status["data"]:
-        if data_class['name'] == label:
+        if data_class["name"] == label:
             current_class = data_class
             break
 
@@ -132,7 +137,7 @@ async def delete_class(label: str):
     # delete class from model status
     app.model_status["data"].remove(current_class)
     print(app.model_status["data"])
-    
+
     # delete class from shared volume
     shutil.rmtree(f"{SHARED_DATA_PATH}/images/{label}", ignore_errors=True)
 
@@ -144,12 +149,21 @@ async def delete_class(label: str):
 # The model is trained in mymodel service
 # app.model_status['model_info'] is used to keep track of the model and its status
 
+
 @app.get("/model/status")
 async def get_status():
     return app.model_status
 
+
 @app.post("/model/train")
-async def train(batch_size: int, epochs: int, optimizer:str, learning_rate: float, momentum:float, loss: str):
+async def train(
+    batch_size: int,
+    epochs: int,
+    optimizer: str,
+    learning_rate: float,
+    momentum: float,
+    loss: str,
+):
     # check training parameters
     if batch_size <= 0:
         raise HTTPException(
@@ -159,7 +173,7 @@ async def train(batch_size: int, epochs: int, optimizer:str, learning_rate: floa
         raise HTTPException(
             status_code=400, detail="Epochs cannot be less than or equal to 0"
         )
-    
+
     if len(os.listdir(f"{SHARED_DATA_PATH}/images")) == 0:
         raise HTTPException(status_code=400, detail="No classes found")
 
@@ -194,13 +208,15 @@ async def train(batch_size: int, epochs: int, optimizer:str, learning_rate: floa
     app.model_status["model_info"]["train_size"] = res["train_size"]
     app.model_status["model_info"]["val_size"] = res["val_size"]
     app.model_status["model_info"]["evaluation"] = res["eval"]
+    app.model_status["model_info"]["summary"] = res["summary"]
 
     # save model status to shared volume
-    
+
     with open(f"{SHARED_DATA_PATH}/model/model_status.json", "w") as f:
         json.dump(app.model_status, f)
 
     return {"message": "Model training finished"}
+
 
 @app.get("/model/delete")
 async def delete_model():
@@ -216,8 +232,10 @@ async def delete_model():
     app.model_status["model_info"]["start_time"] = None
     app.model_status["model_info"]["end_time"] = None
     app.model_status["model_info"]["evaluation"] = None
+    app.model_status["model_info"]["summary"] = None
 
     return {"message": "Model deleted successfully"}
+
 
 @app.post("/model/predict")
 async def predict(file: UploadFile = File(...)):
@@ -244,18 +262,20 @@ async def predict(file: UploadFile = File(...)):
 # Testing the CRUD operations for classes management
 # Using 'with TestClient' to test the environment variables in the app
 
+
 def test_root():
     with TestClient(app) as client:
         response = client.get("/")
         assert response.status_code == 200
         assert response.json() == {"message": "Backend is running"}
 
+
 def test_get_classes():
     with TestClient(app) as client:
         response = client.get("/classes")
         assert response.status_code == 200
         assert response.json() == []
-        
+
 
 def test_add_class():
     with TestClient(app) as client:
@@ -265,20 +285,25 @@ def test_add_class():
         assert response.status_code == 200
         assert response.json() == {"message": "Class test added 5 images successfully"}
 
+
 def test_update_class():
     with TestClient(app) as client:
         response = client.post(
             "/classes/update", params={"oldlabel": "test", "newlabel": "test2"}
         )
         assert response.status_code == 200
-        assert response.json() == {"message": "Class test changed to test2 successfully"}
+        assert response.json() == {
+            "message": "Class test changed to test2 successfully"
+        }
+
 
 def test_get_classes_after_update():
     with TestClient(app) as client:
         response = client.get("/classes")
         assert response.status_code == 200
-        assert {"name":"test", 'samples': 0} not in response.json()
-        assert {"name":"test2", 'samples': 0} in response.json()
+        assert {"name": "test", "samples": 0} not in response.json()
+        assert {"name": "test2", "samples": 0} in response.json()
+
 
 def test_delete_class():
     with TestClient(app) as client:

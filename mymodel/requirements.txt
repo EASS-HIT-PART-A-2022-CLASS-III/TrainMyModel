@@ -1,8 +1,12 @@
+# for http requests
 fastapi
 uvicorn[standard]
-# tensorflow
-tensorflow_hub
 pydantic
 httpx
-pytest
-pillow
+
+# for ML model
+tensorflow_hub
+
+# for plot_model
+# pydot
+# graphviz

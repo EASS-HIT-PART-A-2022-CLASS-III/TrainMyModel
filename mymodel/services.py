@@ -50,6 +50,7 @@ def train_model(model, train_ds, validation_ds, epochs: int):
 
 def save_model(model, path: str):
     model.save_weights(f"{path}/model/final_model")
+    tf.keras.utils.plot_model(model.model(), to_file=f"{path}/model/vis-model.png", show_shapes=True, show_trainable=True, show_layer_names=True, expand_nested=True, show_layer_activations=True)
     save_model_archive(model, path)
 
 def save_model_archive(model, path: str):
