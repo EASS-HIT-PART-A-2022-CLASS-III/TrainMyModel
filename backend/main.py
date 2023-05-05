@@ -1,4 +1,4 @@
-from .schemas import ImageData
+from schemas import ImageData
 import datetime
 import shutil
 import os
@@ -321,13 +321,17 @@ async def delete_model():
 
 
 @app.post("/model/predict")
-async def predict(file: UploadFile = File(...)):
+async def predict(img: ImageData):
     # save file to shared folder
-    filename = file.filename
+    filename = img.images[0].filename
     path = f"{SHARED_DATA_PATH}/output/{filename}"
-    content = await file.read()
+    content = img.images[0].img
+    content = base64.b64decode(content.encode())
+    # content = io.BytesIO(content)
+
     with open(path, "wb") as f:
         f.write(content)
+
     classes = [cls['name'] for cls in app.model_status["data"]]
 
     # send to model service

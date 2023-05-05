@@ -3,7 +3,8 @@ import os
 import streamlit as st
 import httpx
 import asyncio
-
+import io
+import base64
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 
@@ -25,11 +26,19 @@ load_model_status_to_sidebar()
 
 color = ["blue", "green", "orange", "red", "violet"]
 
+def process_image_before_send(file):
+    image = Image.open(file)
+    image_bytes = io.BytesIO()
+    format = 'png'
+    image.save(image_bytes, format=format)
+    content = base64.b64encode(image_bytes.getvalue())
+    img = {'img':content.decode(), 'filename':file.name}
+    return img
 
 async def send_request(file):
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{BACKEND_URL}/model/predict", files={"file": file}, timeout=None
+            f"{BACKEND_URL}/model/predict", json={"images": [file], 'label':''}, timeout=None
         )
     return response
 
@@ -80,10 +89,10 @@ if mode == "Upload":
         "Choose an image...", type=["jpg", "jpeg", "png"]
     )
     if container.button("Upload"):
-        # if an image is uploaded, send the request
         if new_sample is not None:
             with st.spinner("Please wait, predicting..."):
-                response = asyncio.run(send_request(new_sample))
+                to_pred = process_image_before_send(new_sample)
+                response = asyncio.run(send_request(to_pred))
             fill_results(new_sample, response)
 
 
@@ -92,22 +101,8 @@ else:
     new_sample = container.camera_input("live-stream", label_visibility="hidden")
     if container.button("Upload"):
         if new_sample is not None:
-            # To read image file buffer as a PIL Image:
-            # img = Image.open(new_sample)
             with st.spinner("Please wait, predicting..."):
-                response = asyncio.run(send_request(new_sample))
+                to_pred = process_image_before_send(new_sample)
+                response = asyncio.run(send_request(to_pred))
             fill_results(new_sample, response)
-            # img = Image.open(new_sample)
-            # results.image(img, caption="Uploaded Image", use_column_width=True)
-            # results.write("Prediction: " + response.json()["class"])
-            # results.write("Probability: " + str(response.json()["score"]))
-            # expander = results.expander("Response JSON")
-            # expander.json(response.json())
 
-
-# results.subheader("Prediction results:")
-
-# img = Image.open(new_sample)
-# results.image(img, caption="Uploaded Image", use_column_width=True)
-# results.write("Prediction: " + response.json()["class"])
-# results.write("Probability: " + str(response.json()["score"]))
