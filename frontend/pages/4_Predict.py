@@ -42,8 +42,8 @@ def fill_results(new_sample, response):
     sep = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
     col1.markdown(
         f"""
-        ### **Prediction**:{sep}:{color[argmax]}[{prediction}]
-        #### **Confidence**:{sep}:{color[argmax]}[{str(confidence)[:5]}]
+        ### **Prediction**:{sep}:{color[argmax%len(color)]}[{prediction}]
+        #### **Confidence**:{sep}:{color[argmax%len(color)]}[{str(confidence)[:5]}]
     """
     )
     img = Image.open(new_sample)

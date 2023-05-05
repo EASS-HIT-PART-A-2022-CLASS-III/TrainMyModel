@@ -1,7 +1,8 @@
 import streamlit as st
 import httpx
 import os
-
+import io
+from PIL import Image
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
@@ -24,6 +25,11 @@ if status["model_info"]["status"] == "not trained":
 elif status["model_info"]["status"] == "training":
     st.warning("Model is training")
     st.write("Be patient, it will be ready soon 😊")
+    st.stop()
+elif status["model_info"]["status"] == "data changed":
+    st.warning("Data changed, model needs to be trained again")
+    st.write("Go to the train page to train it 🚂")
+    st.stop()
 else:
     st.success("Model is **trained** and ready to use 🎉")
     st.markdown(
@@ -55,7 +61,13 @@ else:
     Names of the layers are also shown, together with if trainable **(T)** or not **(NT)**.  
     See [Tensorflow docs](https://www.tensorflow.org/api_docs/python/tf/keras/Model#plot_model) for more info.  
     """)
+
     arch_expander = st.expander("Open for more info")
+    # get the image from backend
+    res = httpx.get(f"{BACKEND_URL}/model/architecture")
+    # st.write(res.text)
+    file = io.BytesIO(res.content)
+    file = Image.open(res.content)
     arch_expander.image(f"{SHARED_DATA_PATH}/model/vis-model.png")
 
     st.markdown("""
@@ -119,8 +131,11 @@ class MyModel(tf.keras.Model):
         return output
         """)
 
-    with open(f"{SHARED_DATA_PATH}/output/model_weights.zip", "rb") as file:
-        download_btn = st.download_button(
+    # Get the model weights from backend
+    res = httpx.get(f"{BACKEND_URL}/model/download")
+    file = io.BytesIO(res.content)
+    
+    download_btn = st.download_button(
             label="Download weights", data=file, file_name="model_weights.zip"
         )
 

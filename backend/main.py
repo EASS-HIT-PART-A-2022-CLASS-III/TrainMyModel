@@ -1,10 +1,27 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from fastapi.testclient import TestClient
+from typing import List
+from pydantic import BaseModel
 import httpx
 import shutil
 import os
 import datetime
 import json
+import io
+import base64
+from PIL import Image
+import random
+
+############ DATA MODELS ############
+
+class ImageScheme(BaseModel):
+    img: str
+    filename:str
+
+class ImageData(BaseModel):
+    images: List[ImageScheme]
+    label: str
 
 ############ APP INIT ############
 
@@ -36,17 +53,21 @@ def init_data():
         },
     }
 
-    # get classes from shared folder
-    cls = os.listdir(f"{SHARED_DATA_PATH}/images")
-    if len(cls) > 0:
-        for folder in cls:
-            samples = len(os.listdir(f"{SHARED_DATA_PATH}/images/{folder}"))
-            app.model_status["data"].append({"name": folder, "samples": samples})
-
     # load model from shared folder
     if os.path.isfile(f"{SHARED_DATA_PATH}/model/model_status.json"):
         with open(f"{SHARED_DATA_PATH}/model/model_status.json", "r") as f:
-            app.model_status = json.loads(f.read())
+            app.model_status.update(json.loads(f.read()))
+
+    # get classes from shared folder
+    cls = os.listdir(f"{SHARED_DATA_PATH}/images")
+    
+    if len(cls) > 0:
+        # empty app.model_status["data"]
+        for folder in cls:
+            if folder not in [data_class["name"] for data_class in app.model_status["data"]]:
+                samples = len(os.listdir(f"{SHARED_DATA_PATH}/images/{folder}"))
+                app.model_status["data"].append({"name": folder, "samples": samples})
+                app.model_status["model_info"]["status"] = "data changed"
 
 
 @app.on_event("shutdown")
@@ -74,14 +95,59 @@ async def root():
 
 @app.get("/classes")
 async def get_classes():
-    # cls_names = {cls.name: cls.samples for cls in app.model_status["data"]}
-    return app.model_status["data"]
+    data = app.model_status["data"]
+    return data
+    
+
+@app.get("/classes/get_images/{label}", response_model=ImageData)
+async def get_images(label: str, num: int = 3):
+    # check if class exists
+    current_class = None
+    for data_class in app.model_status["data"]:
+        if data_class["name"] == label:
+            current_class = data_class
+            break
+
+    if not current_class:
+        raise HTTPException(status_code=400, detail="Class not found")
+
+    image_data = {'images':[], 'label':label}
+    # get images from shared volume
+    images = os.listdir(f"{SHARED_DATA_PATH}/images/{label}")
+    for _ in range(num):
+        rnd_image = random.choice(images)
+        images.remove(rnd_image)
+        image = Image.open(f"{SHARED_DATA_PATH}/images/{label}/{rnd_image}")
+        image = image.resize((224, 224))
+        image_bytes = io.BytesIO()
+        format = 'png'
+        
+        image.save(image_bytes, format=format)
+        content = base64.b64encode(image_bytes.getvalue())
+        img_scheme = {'img':content.decode(), 'filename':rnd_image}
+        image_data['images'].append(img_scheme)
+
+    return image_data
+     
 
 
 @app.post("/classes/add")
-async def add_class(label: str, number_of_images: int):
+async def add_class(data :ImageData):
+    label = data.label
+    images = data.images
+
+    print(len(images), label)
     # create class folder in shared volume
-    os.makedirs(f"{SHARED_DATA_PATH}/images/{label}", exist_ok=True)
+    if not os.path.exists(f"{SHARED_DATA_PATH}/images/{label}"):
+
+        os.makedirs(f"{SHARED_DATA_PATH}/images/{label}", exist_ok=True)
+    
+    # save images to shared volume
+    for img_str in images:
+        image = Image.open(io.BytesIO(base64.b64decode(img_str.img.encode())))
+        image.save(f"{SHARED_DATA_PATH}/images/{label}/{img_str.filename}")
+    
+    number_of_images = len(images)
 
     # add class to model status
     for data_class in app.model_status["data"]:
@@ -90,6 +156,8 @@ async def add_class(label: str, number_of_images: int):
             break
     else:
         app.model_status["data"].append({"name": label, "samples": number_of_images})
+    
+    app.model_status["model_info"]["status"] = "data changed"
 
     return {"message": f"Class {label} added {number_of_images} images successfully"}
 
@@ -119,6 +187,9 @@ async def update_class(oldlabel: str, newlabel: str):
         os.path.join(f"{SHARED_DATA_PATH}/images/", oldlabel),
         os.path.join(f"{SHARED_DATA_PATH}/images/", newlabel),
     )
+
+    app.model_status["model_info"]["status"] = "data changed"
+
     return {"message": f"Class {oldlabel} changed to {newlabel} successfully"}
 
 
@@ -136,10 +207,11 @@ async def delete_class(label: str):
 
     # delete class from model status
     app.model_status["data"].remove(current_class)
-    print(app.model_status["data"])
-
+ 
     # delete class from shared volume
     shutil.rmtree(f"{SHARED_DATA_PATH}/images/{label}", ignore_errors=True)
+
+    app.model_status["model_info"]["status"] = "data changed"
 
     return {"message": f"Class {label} deleted successfully"}
 
@@ -154,6 +226,23 @@ async def delete_class(label: str):
 async def get_status():
     return app.model_status
 
+@app.get("/model/download")
+async def download_model():
+    # check if model exists
+    if not os.path.exists(f"{SHARED_DATA_PATH}/output/model_weights.zip"):
+        raise HTTPException(status_code=400, detail="Model weights not found")
+
+    # download model
+    return FileResponse(f"{SHARED_DATA_PATH}/output/model_weights.zip", media_type="application/zip", filename="model_weights.zip")
+
+@app.get("/model/architecture")
+async def get_architecture():
+    # check if model exists
+    if not os.path.exists(f"{SHARED_DATA_PATH}/model/vis-model.png"):
+        raise HTTPException(status_code=400, detail="Model architecture not found")
+
+    # download model
+    return FileResponse(f"{SHARED_DATA_PATH}/model/vis-model.png", media_type='application/image' ,filename="vis-model.png")
 
 @app.post("/model/train")
 async def train(
