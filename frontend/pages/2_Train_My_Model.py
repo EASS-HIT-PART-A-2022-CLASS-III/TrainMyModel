@@ -4,8 +4,22 @@ import httpx
 import asyncio
 
 BACKEND_URL = os.getenv("BACKEND_URL")
-
 st.set_page_config(page_title="Train My Model", page_icon="🚂")
+
+def load_model_status_to_sidebar():
+    res = httpx.get(f"{BACKEND_URL}/model/status")
+    model_status = res.json()['model_info']['status']
+    st.sidebar.title("Model status:")
+    if model_status == "trained":
+        st.sidebar.info("Model is Trained")
+    elif model_status == "not trained":
+        st.sidebar.info("Model is not Trained")
+    elif model_status == "training":
+        st.sidebar.info("Model is Training")
+    elif model_status == "data changed":
+        st.sidebar.info("Data changed, model needs to be trained again")
+
+load_model_status_to_sidebar()
 
 model_status = httpx.get(f"{BACKEND_URL}/model/status").json()
 if model_status["model_info"]["status"] == "trained":

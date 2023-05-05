@@ -1,7 +1,6 @@
 import streamlit as st
 import httpx
 import os
-import random
 import asyncio
 from PIL import Image
 import io
@@ -9,6 +8,22 @@ import base64
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 
+st.set_page_config(page_title="My Classes", page_icon="🐕‍🦺")
+
+def load_model_status_to_sidebar():
+    res = httpx.get(f"{BACKEND_URL}/model/status")
+    model_status = res.json()['model_info']['status']
+    st.sidebar.title("Model status:")
+    if model_status == "trained":
+        st.sidebar.info("Model is Trained")
+    elif model_status == "not trained":
+        st.sidebar.info("Model is not Trained")
+    elif model_status == "training":
+        st.sidebar.info("Model is Training")
+    elif model_status == "data changed":
+        st.sidebar.info("Data changed, model needs to be trained again")
+
+load_model_status_to_sidebar()
 
 color = ["blue", "green", "orange", "red", "violet"]
 
@@ -57,7 +72,6 @@ def process_images_from_backend(img_list):
         img['img'] = Image.open(img['img'])
     return img_list
 
-st.set_page_config(page_title="My Classes", page_icon="🐕‍🦺")
 st.title("Model Classes")
 
 if "add_class" in st.session_state and st.session_state["add_class"]:

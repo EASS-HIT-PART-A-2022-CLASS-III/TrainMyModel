@@ -14,9 +14,13 @@ SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 IMG_DATA_PATH = f"{SHARED_DATA_PATH}/images"
 
 app = fastapi.FastAPI(title="TrainMyModel MyModel", version="0.1.0")
-app.model = None
-app.train_ds = None
 
+@app.on_event("startup")
+async def startup_event():
+    app.model = None
+    app.train_ds = None
+    app.val_ds = None
+    
 
 ############ ROUTES ############
 

@@ -8,6 +8,21 @@ import asyncio
 BACKEND_URL = os.getenv("BACKEND_URL")
 
 st.set_page_config(page_title="Predict", page_icon="✨")
+def load_model_status_to_sidebar():
+    res = httpx.get(f"{BACKEND_URL}/model/status")
+    model_status = res.json()['model_info']['status']
+    st.sidebar.title("Model status:")
+    if model_status == "trained":
+        st.sidebar.info("Model is Trained")
+    elif model_status == "not trained":
+        st.sidebar.info("Model is not Trained")
+    elif model_status == "training":
+        st.sidebar.info("Model is Training")
+    elif model_status == "data changed":
+        st.sidebar.info("Data changed, model needs to be trained again")
+
+load_model_status_to_sidebar()
+
 color = ["blue", "green", "orange", "red", "violet"]
 
 
@@ -25,6 +40,7 @@ res = httpx.get(f"{BACKEND_URL}/model/status")
 model_status = res.json()
 
 st.subheader("Either upload a picture or take a picture from camera")
+st.write("Be advised that the first prediction will take a while, as the model needs to be loaded.")
 mode = st.radio("Select mode:", ["Upload", "Camera"])
 container = st.container()
 st.divider()
@@ -66,7 +82,8 @@ if mode == "Upload":
     if container.button("Upload"):
         # if an image is uploaded, send the request
         if new_sample is not None:
-            response = asyncio.run(send_request(new_sample))
+            with st.spinner("Please wait, predicting..."):
+                response = asyncio.run(send_request(new_sample))
             fill_results(new_sample, response)
 
 
@@ -77,7 +94,8 @@ else:
         if new_sample is not None:
             # To read image file buffer as a PIL Image:
             # img = Image.open(new_sample)
-            response = asyncio.run(send_request(new_sample))
+            with st.spinner("Please wait, predicting..."):
+                response = asyncio.run(send_request(new_sample))
             fill_results(new_sample, response)
             # img = Image.open(new_sample)
             # results.image(img, caption="Uploaded Image", use_column_width=True)

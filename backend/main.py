@@ -1,35 +1,26 @@
+from .schemas import ImageData
+import datetime
+import shutil
+import os
+import io
+import base64
+import json
+import random
+import httpx
+from PIL import Image
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.testclient import TestClient
-from typing import List
-from pydantic import BaseModel
-import httpx
-import shutil
-import os
-import datetime
-import json
-import io
-import base64
-from PIL import Image
-import random
 
-############ DATA MODELS ############
 
-class ImageScheme(BaseModel):
-    img: str
-    filename:str
-
-class ImageData(BaseModel):
-    images: List[ImageScheme]
-    label: str
-
-############ APP INIT ############
-
-app = FastAPI(title="TrainMyModel Backend", version="0.1.0")
+############ DOCKER-COMPOSE ENV ############
 
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 MYMODEL_URL = os.getenv("MYMODEL_URL")
 
+############ APP INIT ############
+
+app = FastAPI(title="TrainMyModel Backend", version="0.1.0")
 
 @app.on_event("startup")
 def init_data():
@@ -241,8 +232,11 @@ async def get_architecture():
     if not os.path.exists(f"{SHARED_DATA_PATH}/model/vis-model.png"):
         raise HTTPException(status_code=400, detail="Model architecture not found")
 
-    # download model
-    return FileResponse(f"{SHARED_DATA_PATH}/model/vis-model.png", media_type='application/image' ,filename="vis-model.png")
+    image = Image.open(f"{SHARED_DATA_PATH}/model/vis-model.png")
+    image_bytes = io.BytesIO()
+    image.save(image_bytes, format='png')
+    content = base64.b64encode(image_bytes.getvalue())
+    return content
 
 @app.post("/model/train")
 async def train(
@@ -350,7 +344,6 @@ async def predict(file: UploadFile = File(...)):
 ############ PYTESTS TESTS ############
 # Testing the CRUD operations for classes management
 # Using 'with TestClient' to test the environment variables in the app
-
 
 def test_root():
     with TestClient(app) as client:
