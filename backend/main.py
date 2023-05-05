@@ -8,7 +8,7 @@ import json
 import random
 import httpx
 from PIL import Image
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.testclient import TestClient
 
