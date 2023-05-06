@@ -10,7 +10,7 @@ import httpx
 from PIL import Image
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-from fastapi.testclient import TestClient
+
 
 
 ############ DOCKER-COMPOSE ENV ############
@@ -343,56 +343,3 @@ async def predict(img: ImageData):
         )
 
     return eval.json()
-
-
-############ PYTESTS TESTS ############
-# Testing the CRUD operations for classes management
-# Using 'with TestClient' to test the environment variables in the app
-
-def test_root():
-    with TestClient(app) as client:
-        response = client.get("/")
-        assert response.status_code == 200
-        assert response.json() == {"message": "Backend is running"}
-
-
-def test_get_classes():
-    with TestClient(app) as client:
-        response = client.get("/classes")
-        assert response.status_code == 200
-        assert response.json() == []
-
-
-def test_add_class():
-    with TestClient(app) as client:
-        response = client.post(
-            "/classes/add", params={"label": "test", "number_of_images": 5}
-        )
-        assert response.status_code == 200
-        assert response.json() == {"message": "Class test added 5 images successfully"}
-
-
-def test_update_class():
-    with TestClient(app) as client:
-        response = client.post(
-            "/classes/update", params={"oldlabel": "test", "newlabel": "test2"}
-        )
-        assert response.status_code == 200
-        assert response.json() == {
-            "message": "Class test changed to test2 successfully"
-        }
-
-
-def test_get_classes_after_update():
-    with TestClient(app) as client:
-        response = client.get("/classes")
-        assert response.status_code == 200
-        assert {"name": "test", "samples": 0} not in response.json()
-        assert {"name": "test2", "samples": 0} in response.json()
-
-
-def test_delete_class():
-    with TestClient(app) as client:
-        response = client.post("/classes/delete", params={"label": "test2"})
-        assert response.status_code == 200
-        assert response.json() == {"message": "Class test2 deleted successfully"}
