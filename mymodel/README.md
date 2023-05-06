@@ -8,6 +8,9 @@ MyModel microservice was built using FastApi, and Tensorflow.
 - Python 3.9+
 
 ## Setup
+| :warning:    | Be advised, it is prefered to run the app with docker-compose! |
+|---------------|:------------------------|
+
 1. Clone the repository to your local machine.
 2. Install the necessary packages by running ```pip install -r requirements.txt```.
 3. set the environment variables in the ```.env``` file in the root of the backend dir.  

@@ -171,7 +171,8 @@ class MyModel(tf.keras.Model):
     """
     )
     st.warning("This is an irreversible action")
-    if st.button("Reset my model"):
-        res = httpx.get(f"{BACKEND_URL}/model/delete")
-        st.session_state["model deleted"] = True
-        st.experimental_rerun()
+    if st.checkbox("I understand the consequences"):
+        if st.button("Reset my model"):
+            res = httpx.get(f"{BACKEND_URL}/model/delete")
+            st.session_state["model deleted"] = True
+            st.experimental_rerun()
