@@ -76,9 +76,9 @@ docker-compose up
 ├── README.md
 ```
 
-### License
+## License
 
-MIT License
+**MIT License**
 
 Copyright (c) 2023 Matan Mizrachi  
   
