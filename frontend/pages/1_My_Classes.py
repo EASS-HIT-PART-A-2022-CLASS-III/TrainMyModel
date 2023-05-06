@@ -8,9 +8,9 @@ import base64
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 
-st.set_page_config(page_title="My Classes", page_icon="🐕‍🦺")
+st.set_page_config(page_title="My Classes", page_icon="res/logo.png")
 
-def load_model_status_to_sidebar():
+def load_sidebar():
     res = httpx.get(f"{BACKEND_URL}/model/status")
     model_status = res.json()['model_info']['status']
     st.sidebar.title("Model status:")
@@ -22,8 +22,16 @@ def load_model_status_to_sidebar():
         st.sidebar.info("Model is Training")
     elif model_status == "data changed":
         st.sidebar.info("Data changed, model needs to be trained again")
+    st.sidebar.divider()
 
-load_model_status_to_sidebar()
+    _,col,_ = st.sidebar.columns([1,2,1])
+    col.image("res/sidebar-logo.png")
+    st.sidebar.divider()
+    _,col,_ = st.sidebar.columns([1,3,1])
+    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini)")
+   
+
+load_sidebar()
 
 color = ["blue", "green", "orange", "red", "violet"]
 
