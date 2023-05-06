@@ -1,0 +1,15 @@
+# Jupiter Notebook
+*.ipynb
+
+# Python cache
+*.pyc
+__pycache__/
+
+# Pytest cache
+.pytest_cache/
+
+# VScode
+.vscode/
+
+# Data examples
+PetImages/*

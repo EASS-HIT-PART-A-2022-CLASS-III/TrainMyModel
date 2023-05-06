@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  frontend:
+    ports:
+      - "8000:8000"
+    depends_on:
+      - backend
+      - mymodel
+    volumes:
+      - ./frontend:/usr/src/frontend
+      - shared-volume:/usr/src/shared-volume
+    build: ./frontend
+    environment:
+      - BACKEND_URL=http://backend:8001
+      - SHARED_VOLUME=/usr/src/shared-volume
+
+  backend:
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mymodel
+    volumes:
+      - ./backend:/usr/src/backend
+      - shared-volume:/usr/src/shared-volume
+    build: ./backend
+    environment:
+      - MYMODEL_URL=http://mymodel:8002
+      - SHARED_VOLUME=/usr/src/shared-volume
+
+
+  mymodel:
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./mymodel:/usr/src/mymodel
+      - shared-volume:/usr/src/shared-volume
+    build: ./mymodel
+    environment:
+      - BACKEND_URL=http://backend:8001
+      - SHARED_VOLUME=/usr/src/shared-volume
+
+
+volumes:
+  shared-volume:
