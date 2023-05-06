@@ -1,15 +1,27 @@
 # TrainMyModel MyModel Service
-This is a service that performs compiling, training and prediction on an image classification model.
+TrainMyModel is a web app to train a CNN (Convolution Neural Network) deep learning model to clasify between different classes.   
+MyModel microservice, is in charge of building, training and predicting with the CNN model.  
+MyModel microservice was built using FastApi, and Tensorflow. 
 
 ## Requirements
 - Docker
-- Python 3.7+
+- Python 3.9+
 
 ## Setup
-1. Clone the repository.
+1. Clone the repository to your local machine.
 2. Install the necessary packages by running ```pip install -r requirements.txt```.
-3. Set the environment variables for the *BACKEND_URL* and *SHARED_VOLUME*.  
-*SHARED_VOLUME* should be the path to the shared volume where the images will be stored.   
-*BACKEND_URL* should be the URL of the backend service. 
-4. Run the service by running ```uvicorn app:app --reload```.
+3. set the environment variables in the ```.env``` file in the root of the backend dir.  
+```ini
+SHARED_VOLUME=path/to/shared/volume.  
+MYMODEL_URL=http://backend-service:port
+```
+4. Run the service by running ```uvicorn main:app --reload```.
 
+## Routes
+- `/model` - Classes management routes  
+Allowing model functionality:
+    - **[GET]** `/load` - Load the model from the shared folder.
+    - **[GET]** `/train` - Create the model and start training.
+    - **[POST]** `/predict` - Predict an image class using the trained model.
+    - **[GET]** `/delete` - Delete class and all images.
+    
