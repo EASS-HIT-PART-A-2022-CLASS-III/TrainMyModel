@@ -1,5 +1,5 @@
 import tensorflow as tf
-from model import MyModel
+from model.model import MyModel
 import os
 import shutil
 
@@ -59,6 +59,7 @@ def save_model_archive(model, path: str):
 def load_model(path: str, num_classes: int):
     if len(os.listdir(f"{path}/model")) == 0:
         return None
+    
     model = MyModel(num_classes)
     model.load_weights(f"{path}/model/final_model")
     save_model_archive(model, path)
@@ -67,7 +68,6 @@ def load_model(path: str, num_classes: int):
 
 def delete_model(path: str):
     files = os.listdir(f"{path}/model")
-    if len(files) == 0:
-        return 
-    for file in files:
-        os.remove(f"{path}/model/{file}")
+    if len(files) != 0:
+        for file in files:
+            os.remove(f"{path}/model/{file}")

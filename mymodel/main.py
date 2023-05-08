@@ -1,7 +1,8 @@
-from model import MyModel
+from model.model import MyModel
+import model.services as services
+
 import tensorflow as tf
 import fastapi
-import services
 import os
 import numpy as np
 import json
