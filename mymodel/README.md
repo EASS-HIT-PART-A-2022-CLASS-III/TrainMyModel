@@ -12,13 +12,16 @@ MyModel microservice was built using FastApi, and Tensorflow.
 |---------------|:------------------------|
 
 1. Clone the repository to your local machine.
-2. Install the necessary packages by running ```pip install -r requirements.txt```.
-3. set the environment variables in the ```.env``` file in the root of the backend dir.  
+2. Set the environment variables in the ```.env``` file in the root of the backend dir.  
 ```ini
 SHARED_VOLUME=path/to/shared/volume.  
 MYMODEL_URL=http://backend-service:port
 ```
-4. Run the service by running ```uvicorn main:app --reload```.
+3. Run the container with:
+``` bash
+docker build -t train-my-model-mymodel .
+docker run -d --name train-my-model-mymodel -p 8002:8002 train-my-model-mymodel
+```
 
 ## Routes
 - `/model` - Classes management routes  

@@ -5,13 +5,19 @@ import services
 import os
 import numpy as np
 import json
+from dotenv import load_dotenv
 
+############ DOCKER ENV ############
+# Load the environment variables from .env file if running without compose
+load_dotenv()
 
-############ MYMODEL INIT ############
+############ DOCKER-COMPOSE ENV ############
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 SHARED_DATA_PATH = os.getenv("SHARED_VOLUME")
 IMG_DATA_PATH = f"{SHARED_DATA_PATH}/images"
+
+############ MYMODEL INIT ############
 
 app = fastapi.FastAPI(title="TrainMyModel MyModel", version="0.1.0")
 

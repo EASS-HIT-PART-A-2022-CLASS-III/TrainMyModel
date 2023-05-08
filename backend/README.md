@@ -13,13 +13,17 @@ The backend was built using FastApi.
 |---------------|:------------------------|
 
 1. Clone the repository to your local machine.
-2. Install the dependencies by running ```pip install -r requirements.txt```.
-3. set the environment variables in the ```.env``` file in the root of the backend dir.  
+2. Set the environment variables in the ```.env``` file in the root of the backend dir.  
 ```ini
 SHARED_VOLUME=path/to/shared/volume.  
 MYMODEL_URL=http://model-service:port
 ```
-4. Run the server with ```uvicorn main:app --reload```.
+4. Run the container with:
+```bash 
+docker build -t train-my-model-backend .
+docker run -d --name train-my-model-backend -p 8001:8001 train-my-model-backend
+```
+
 
 ## Routes
 - `/classes` - Classes management routes  

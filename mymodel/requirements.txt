@@ -1,13 +1,17 @@
-# for http requests
+# HTTP requests
 fastapi
 uvicorn[standard]
-pydantic
 httpx
+pydantic
+
+# Image processing
 pillow
 
-# for ML model
+# ML model
 tensorflow_hub
 
-# for plot_model
+# plot_model
 pydot
-# graphviz
+
+# .env
+python-dotenv

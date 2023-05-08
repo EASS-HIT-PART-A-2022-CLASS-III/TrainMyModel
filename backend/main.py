@@ -10,8 +10,11 @@ import httpx
 from PIL import Image
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from dotenv import load_dotenv
 
-
+############ DOCKER ENV ############
+# Load the environment variables from .env file if running without compose
+load_dotenv()
 
 ############ DOCKER-COMPOSE ENV ############
 

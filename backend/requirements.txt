@@ -1,7 +1,15 @@
+# HTTP requests
 fastapi
 uvicorn[standard]
-pydantic
 httpx
-pillow
+pydantic
 python-multipart
+
+# Image processing
+pillow
+
+# Testing
 pytest
+
+# for .env
+python-dotenv
