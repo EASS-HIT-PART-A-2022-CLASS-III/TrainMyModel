@@ -3,8 +3,15 @@ import streamlit as st
 import httpx
 import asyncio
 
+######## Page Config ########
+
 BACKEND_URL = os.getenv("BACKEND_URL")
-st.set_page_config(page_title="Train My Model", page_icon="res/logo.png")
+st.set_page_config(
+    page_title="Train My Model", 
+    page_icon="res/logo.png"
+)
+
+######## Sidebar Config ########
 
 def load_sidebar():
     res = httpx.get(f"{BACKEND_URL}/model/status")
@@ -21,21 +28,43 @@ def load_sidebar():
     st.sidebar.divider()
 
     _,col,_ = st.sidebar.columns([1,2,1])
+    
     col.image("res/sidebar-logo.png")
     st.sidebar.divider()
-    _,col,_ = st.sidebar.columns([1,3,1])
-    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini)")   
-
+    _,col,_ = st.sidebar.columns([1,8,1])
+    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini), 2023")
+  
 load_sidebar()
+
+######## Helper functions ########
+
+async def make_train_request():
+    async with httpx.AsyncClient() as client:
+        res = await client.post(
+            f"{BACKEND_URL}/model/train",
+            params={
+                "batch_size": batch_size,
+                "epochs": epochs,
+                "optimizer": optimizer,
+                "learning_rate": learning_rate,
+                "momentum": momentum,
+                "loss": loss,
+            },
+            timeout=None,
+        )
+        return res
+
+
+######## Page Content ########
 
 model_status = httpx.get(f"{BACKEND_URL}/model/status").json()
 if model_status["model_info"]["status"] == "trained":
-    st.error("Model already trained")
-    st.write("Check model page for info")
+    st.error("My Model is already trained 🤷‍♂️")
+    st.markdown("Check **My Model** page for more information")
     st.stop()
 if model_status["model_info"]["status"] == "training":
-    st.warning("Model is training, be patient")
-    st.write("Check model page for info")
+    st.warning("My Model is training, be patient 🙏")
+    st.markdown("Check **My Model** page for more information")
     st.stop()
 
 st.title("Train Model")
@@ -66,27 +95,9 @@ st.write("Click the button below to start training")
 train_btn = st.button("Train Model")
 results = st.container()
 
-
-async def make_request():
-    async with httpx.AsyncClient() as client:
-        res = await client.post(
-            f"{BACKEND_URL}/model/train",
-            params={
-                "batch_size": batch_size,
-                "epochs": epochs,
-                "optimizer": optimizer,
-                "learning_rate": learning_rate,
-                "momentum": momentum,
-                "loss": loss,
-            },
-            timeout=None,
-        )
-        return res
-
-
 if train_btn:
     with st.spinner("Model Training in Progress"):
-        res = asyncio.run(make_request())
+        res = asyncio.run(make_train_request())
 
     if res.status_code != 200:
         st.error(f"Error: {res.text}")
@@ -95,5 +106,3 @@ if train_btn:
     res = res.json()
     results.success(res["message"])
     results.write("Check model page for info")
-
-# if

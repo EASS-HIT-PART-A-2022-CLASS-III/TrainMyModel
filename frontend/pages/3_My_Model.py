@@ -7,7 +7,10 @@ import base64
 
 BACKEND_URL = os.getenv("BACKEND_URL")
 
-st.set_page_config(page_title="My Model", page_icon="res/logo.png")
+st.set_page_config(
+    page_title="My Model",
+    page_icon="res/logo.png"
+)
 
 def load_sidebar():
     res = httpx.get(f"{BACKEND_URL}/model/status")
@@ -26,9 +29,9 @@ def load_sidebar():
     _,col,_ = st.sidebar.columns([1,2,1])
     col.image("res/sidebar-logo.png")
     st.sidebar.divider()
-    _,col,_ = st.sidebar.columns([1,3,1])
-    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini)")   
-
+    _,col,_ = st.sidebar.columns([1,8,1])
+    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini), 2023")
+  
 load_sidebar()
 
 st.title("My Model")
@@ -41,15 +44,15 @@ status = httpx.get(f"{BACKEND_URL}/model/status").json()
 
 # st.write(status)
 if status["model_info"]["status"] == "not trained":
-    st.error("Model is not trained")
+    st.error("My Model is not trained")
     st.write("Go to the train page to train it 🚂")
     st.stop()
 elif status["model_info"]["status"] == "training":
-    st.warning("Model is training")
+    st.warning("My Model is training")
     st.write("Be patient, it will be ready soon 😊")
     st.stop()
 elif status["model_info"]["status"] == "data changed":
-    st.warning("Data changed, model needs to be trained again")
+    st.warning("Data changed, My Model needs to be trained again")
     st.write("Go to the train page to train it 🚂")
     st.stop()
 else:

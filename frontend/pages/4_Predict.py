@@ -6,9 +6,18 @@ import asyncio
 import io
 import base64
 
+######## Page Config ########
+
 BACKEND_URL = os.getenv("BACKEND_URL")
 
-st.set_page_config(page_title="Predict", page_icon="res/logo.png")
+st.set_page_config(
+    page_title="Predict",
+    page_icon="res/logo.png"
+)
+
+colors = ["blue", "green", "orange", "red", "violet"]
+
+######## Sidebar Config ########
 
 def load_sidebar():
     res = httpx.get(f"{BACKEND_URL}/model/status")
@@ -27,12 +36,12 @@ def load_sidebar():
     _,col,_ = st.sidebar.columns([1,2,1])
     col.image("res/sidebar-logo.png")
     st.sidebar.divider()
-    _,col,_ = st.sidebar.columns([1,3,1])
-    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini)")  
-
+    _,col,_ = st.sidebar.columns([1,8,1])
+    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini), 2023")
+  
 load_sidebar()
 
-color = ["blue", "green", "orange", "red", "violet"]
+######## Helper functions ########
 
 def process_image_before_send(file):
     image = Image.open(file)
@@ -43,13 +52,40 @@ def process_image_before_send(file):
     img = {'img':content.decode(), 'filename':file.name}
     return img
 
-async def send_request(file):
+async def send_predict_request(file):
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{BACKEND_URL}/model/predict", json={"images": [file], 'label':''}, timeout=None
         )
     return response
 
+def fill_results(new_sample, response):
+    results.subheader("Prediction results:")
+    body = response.json()
+    argmax = int(body["argmax"])
+    prediction = body["prediction"]
+    confidence = body["confidence"]
+    col1, col2 = results.columns(2)
+    col1.markdown("<br><br>", unsafe_allow_html=True)
+    sep = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+    col1.markdown(
+        f"""
+        ### **Prediction**:{sep}:{colors[argmax%len(colors)]}[{prediction}]
+        #### **Confidence**:{sep}:{colors[argmax%len(colors)]}[{str(confidence)[:5]}]
+    """
+    )
+    img = Image.open(new_sample)
+    img = img.resize((224, 224))
+    col2.image(
+        img,
+        caption=f"Detected {prediction} in image",
+        use_column_width=True,
+    )
+    expander = results.expander("Response JSON")
+    expander.json(body)
+
+
+######## Page Content ########
 
 st.title("Predict")
 # get model status from backend
@@ -64,32 +100,6 @@ st.divider()
 results = st.container()
 
 
-def fill_results(new_sample, response):
-    results.subheader("Prediction results:")
-    body = response.json()
-    argmax = int(body["argmax"])
-    prediction = body["prediction"]
-    confidence = body["confidence"]
-    col1, col2 = results.columns(2)
-    col1.markdown("<br><br>", unsafe_allow_html=True)
-    sep = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-    col1.markdown(
-        f"""
-        ### **Prediction**:{sep}:{color[argmax%len(color)]}[{prediction}]
-        #### **Confidence**:{sep}:{color[argmax%len(color)]}[{str(confidence)[:5]}]
-    """
-    )
-    img = Image.open(new_sample)
-    img = img.resize((224, 224))
-    col2.image(
-        img,
-        caption=f"Detected {prediction} in image",
-        use_column_width=True,
-    )
-    expander = results.expander("Response JSON")
-    expander.json(body)
-
-
 if mode == "Upload":
     container.write("Upload a picture to the model:")
     # create a Streamlit file uploader
@@ -100,7 +110,7 @@ if mode == "Upload":
         if new_sample is not None:
             with st.spinner("Please wait, predicting..."):
                 to_pred = process_image_before_send(new_sample)
-                response = asyncio.run(send_request(to_pred))
+                response = asyncio.run(send_predict_request(to_pred))
             fill_results(new_sample, response)
 
 
@@ -111,6 +121,6 @@ else:
         if new_sample is not None:
             with st.spinner("Please wait, predicting..."):
                 to_pred = process_image_before_send(new_sample)
-                response = asyncio.run(send_request(to_pred))
+                response = asyncio.run(send_predict_request(to_pred))
             fill_results(new_sample, response)
 

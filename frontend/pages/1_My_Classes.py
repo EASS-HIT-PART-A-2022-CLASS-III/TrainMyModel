@@ -6,9 +6,18 @@ from PIL import Image
 import io
 import base64
 
+######## Page Config ########
+
 BACKEND_URL = os.getenv("BACKEND_URL")
 
-st.set_page_config(page_title="My Classes", page_icon="res/logo.png")
+st.set_page_config(
+    page_title="My Classes",
+    page_icon="res/logo.png"
+)
+
+colors = ["blue", "green", "orange", "red", "violet"]
+
+######## Sidebar Config ########
 
 def load_sidebar():
     res = httpx.get(f"{BACKEND_URL}/model/status")
@@ -27,14 +36,13 @@ def load_sidebar():
     _,col,_ = st.sidebar.columns([1,2,1])
     col.image("res/sidebar-logo.png")
     st.sidebar.divider()
-    _,col,_ = st.sidebar.columns([1,3,1])
-    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini)")
+    _,col,_ = st.sidebar.columns([1,8,1])
+    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini), 2023")
    
 
 load_sidebar()
 
-color = ["blue", "green", "orange", "red", "violet"]
-
+######## Helper functions ########
 
 async def get_images(gold_label):
     async with httpx.AsyncClient() as client:
@@ -80,6 +88,9 @@ def process_images_from_backend(img_list):
         img['img'] = Image.open(img['img'])
     return img_list
 
+
+######## Page Content ########
+
 st.title("Model Classes")
 
 if "add_class" in st.session_state and st.session_state["add_class"]:
@@ -119,8 +130,8 @@ else:
             st.markdown("#### **Samples:**")
 
         with col2:
-            st.markdown(f"#### :{color[i%len(color)]}[{gold_label}]")
-            st.markdown(f"#### :{color[i%len(color)]}[{img_count}]")
+            st.markdown(f"#### :{colors[i%len(colors)]}[{gold_label}]")
+            st.markdown(f"#### :{colors[i%len(colors)]}[{img_count}]")
 
         tabs[i].markdown("    ")
         edit_btn = tabs[i].checkbox("Edit Class", key=f"edit_class_{i}")
@@ -148,8 +159,8 @@ else:
 
         img_samples = tabs[i].expander("Image samples")
         # get the images from backend
-        # with st.spinner(f"Standby, fetching samples of class {gold_label}"):
         response = asyncio.run(get_images(gold_label))
+
         if response.status_code == 200:
             response = response.json()
             img_list = process_images_from_backend(response['images'])
@@ -165,7 +176,7 @@ else:
 
 
 st.divider()
-#
+
 st.write("Add a class to the model:")
 label = st.text_input("Label")
 data = st.file_uploader("Data", type=["jpg", "png"], accept_multiple_files=True, key=st.session_state["uploader_key"])
