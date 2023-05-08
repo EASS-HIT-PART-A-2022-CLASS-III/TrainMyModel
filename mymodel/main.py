@@ -59,6 +59,7 @@ async def train(
     services.compile_model(
         app.model, optimizer=optimizer, loss=loss, lr=learning_rate, momentum=momentum
     )
+
     history = services.train_model(app.model, app.train_ds, app.val_ds, epochs)
 
     # find the best epoch accuracy
@@ -69,6 +70,7 @@ async def train(
     loss = history.history["loss"][best_index]
     val_loss = history.history["val_loss"][best_index]
 
+    # Save, plot and zip the model
     services.save_model(app.model, SHARED_DATA_PATH)
 
     eval = {
@@ -78,9 +80,8 @@ async def train(
         "val_loss": val_loss,
     }
 
+    # get model summary as text
     stringlist = []
-    # sub = subclass()
-    # sub.summary(print_fn=lambda x: stringlist.append(x))
     app.model.model().summary(print_fn=lambda x: stringlist.append(x))
     model_summary = '\n'.join(stringlist)
 
@@ -92,7 +93,7 @@ async def train(
         "summary": model_summary,
     }
 
-
+# delete the model from shared folder
 @app.get("/model/delete")
 async def delete_model():
     services.delete_model(SHARED_DATA_PATH)
