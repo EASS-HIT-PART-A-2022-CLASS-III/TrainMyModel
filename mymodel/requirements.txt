@@ -1,17 +1,17 @@
 # HTTP requests
-fastapi
+fastapi==0.95.1
+httpx==0.24.0
 uvicorn[standard]
-httpx
-pydantic
+pydantic==1.10.7
 
 # Image processing
-pillow
+pillow==9.5.0
 
 # ML model
-tensorflow_hub
+tensorflow_hub==0.13.0
 
 # plot_model
-pydot
+pydot==1.4.2
 
 # .env
-python-dotenv
+python-dotenv==1.0.0

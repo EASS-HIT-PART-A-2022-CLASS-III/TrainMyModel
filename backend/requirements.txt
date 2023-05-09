@@ -1,15 +1,15 @@
 # HTTP requests
-fastapi
+fastapi==0.95.1
 uvicorn[standard]
-httpx
-pydantic
-python-multipart
+httpx==0.24.0
+pydantic==1.10.7
+python-multipart==0.0.6
 
 # Image processing
-pillow
+pillow==9.5.0
 
 # Testing
-pytest
+pytest==7.3.1
 
 # for .env
-python-dotenv
+python-dotenv==1.0.0
