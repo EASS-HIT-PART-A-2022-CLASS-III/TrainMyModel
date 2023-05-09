@@ -40,6 +40,7 @@ docker-compose up
 ```bash
 ├── backend
 │   ├── __init__.py
+│   ├── .dockerignore
 │   ├── .env
 │   ├── Dockerfile
 │   ├── main.py
