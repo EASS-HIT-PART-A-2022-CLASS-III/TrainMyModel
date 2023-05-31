@@ -130,7 +130,6 @@ async def add_class(data :ImageData):
     label = data.label
     images = data.images
 
-    print(len(images), label)
     # create class folder in shared volume
     if not os.path.exists(f"{SHARED_DATA_PATH}/images/{label}"):
 

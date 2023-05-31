@@ -41,6 +41,8 @@ async def root():
 @app.get("/model/load")
 async def load_model(num_classes: int):
     app.model = services.load_model(SHARED_DATA_PATH, num_classes)
+    if app.model is None:
+        return {"message": "model not found"}
     return {"message": "model loaded successfully"}
 
 
