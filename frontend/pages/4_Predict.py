@@ -5,6 +5,7 @@ import httpx
 import asyncio
 import io
 import base64
+from services import load_sidebar
 
 ######## Page Config ########
 
@@ -19,25 +20,25 @@ colors = ["blue", "green", "orange", "red", "violet"]
 
 ######## Sidebar Config ########
 
-def load_sidebar():
-    res = httpx.get(f"{BACKEND_URL}/model/status")
-    model_status = res.json()['model_info']['status']
-    st.sidebar.title("Model status:")
-    if model_status == "trained":
-        st.sidebar.info("Model is Trained")
-    elif model_status == "not trained":
-        st.sidebar.info("Model is not Trained")
-    elif model_status == "training":
-        st.sidebar.info("Model is Training")
-    elif model_status == "data changed":
-        st.sidebar.info("Data changed, model needs to be trained again")
-    st.sidebar.divider()
+# def load_sidebar():
+#     res = httpx.get(f"{BACKEND_URL}/model/status")
+#     model_status = res.json()['model_info']['status']
+#     st.sidebar.title("Model status:")
+#     if model_status == "trained":
+#         st.sidebar.info("Model is Trained")
+#     elif model_status == "not trained":
+#         st.sidebar.info("Model is not Trained")
+#     elif model_status == "training":
+#         st.sidebar.info("Model is Training")
+#     elif model_status == "data changed":
+#         st.sidebar.info("Data changed, model needs to be trained again")
+#     st.sidebar.divider()
 
-    _,col,_ = st.sidebar.columns([1,2,1])
-    col.image("res/sidebar-logo.png")
-    st.sidebar.divider()
-    _,col,_ = st.sidebar.columns([1,8,1])
-    col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini), 2023")
+#     _,col,_ = st.sidebar.columns([1,2,1])
+#     col.image("res/sidebar-logo.png")
+#     st.sidebar.divider()
+#     _,col,_ = st.sidebar.columns([1,8,1])
+#     col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini), 2023")
   
 load_sidebar()
 
@@ -86,6 +87,13 @@ def fill_results(new_sample, response):
 
 
 ######## Page Content ########
+status = httpx.get(f"{BACKEND_URL}/model/status").json()
+
+if status["model_info"]["status"] == "not trained":
+    st.error("Your Model is not trained yet")
+    st.write("Go to the train page to train it 🚂")
+    st.stop()
+
 
 st.title("Predict")
 # get model status from backend
