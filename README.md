@@ -3,7 +3,7 @@
 </p>
 
 # Train My Model
-![GitHub license](https://img.shields.io/github/license/EASS-HIT-PART-A-2022-CLASS-III/TrainMyModel)
+
 TrainMyModel is a web app to train a CNN (Convolution Neural Network) deep learning model to clasify between different classes.  
 The user defines classes, and add the images to the dataset.  
 Using Resnet-v2 as a base model, the model is refined on the user's classes and after the training, can classify new unseen samples!
