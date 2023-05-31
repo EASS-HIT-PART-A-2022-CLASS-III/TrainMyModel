@@ -39,7 +39,7 @@ docker-compose up
 ## Project Architecture
 
 <p align="center">
-  <img src="res/img/train-my-model-diagram.png" />
+  <img src="res/img/train-my-model-diagram-c.png" />
 </p>
 
 ## License
