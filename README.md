@@ -42,6 +42,9 @@ docker-compose up
   <img src="res/img/architecture.png" />
 </p>
 
+
+## Video Demo
+[![Video Demo](https://img.youtube.com/vi/njWZIr2z_hg/maxresdefault.jpg)](https://youtu.be/njWZIr2z_hg)
 ## License
 
 **MIT License**
