@@ -329,7 +329,6 @@ async def predict(img: ImageData):
     path = f"{SHARED_DATA_PATH}/output/{filename}"
     content = img.images[0].img
     content = base64.b64decode(content.encode())
-    # content = io.BytesIO(content)
 
     with open(path, "wb") as f:
         f.write(content)

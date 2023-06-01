@@ -6,6 +6,7 @@ from PIL import Image
 import io
 import base64
 from services import load_sidebar
+
 ######## Page Config ########
 
 BACKEND_URL = os.getenv("BACKEND_URL")
@@ -18,27 +19,6 @@ st.set_page_config(
 colors = ["blue", "green", "orange", "red", "violet"]
 
 ######## Sidebar Config ########
-
-# def load_sidebar():
-#     res = httpx.get(f"{BACKEND_URL}/model/status")
-#     model_status = res.json()['model_info']['status']
-#     st.sidebar.title("Model status:")
-#     if model_status == "trained":
-#         st.sidebar.info("Model is Trained")
-#     elif model_status == "not trained":
-#         st.sidebar.info("Model is not Trained")
-#     elif model_status == "training":
-#         st.sidebar.info("Model is Training")
-#     elif model_status == "data changed":
-#         st.sidebar.info("Data changed, model needs to be trained again")
-#     st.sidebar.divider()
-
-#     _,col,_ = st.sidebar.columns([1,2,1])
-#     col.image("res/sidebar-logo.png")
-#     st.sidebar.divider()
-#     _,col,_ = st.sidebar.columns([1,8,1])
-#     col.write("©️ Built by [Matan Mizrachi](http://www.github.com/matanini), 2023")
-   
 
 load_sidebar()
 
@@ -81,7 +61,6 @@ def process_images_before_send(files):
     return files_to_send
 
 def process_images_from_backend(img_list):
-    # st.write(img_list)
     for img in img_list:
         img['img'] = base64.b64decode(img['img'].encode())
         img['img'] = io.BytesIO(img['img'])
