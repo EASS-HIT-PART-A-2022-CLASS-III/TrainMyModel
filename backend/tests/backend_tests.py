@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from main import app
 from PIL import Image 
+import numpy as np
 import io
 import base64
 
@@ -23,7 +24,6 @@ def test_get_classes():
 
 
 def test_add_class():
-    import numpy as np
     fake_image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
     image = Image.fromarray(fake_image)
     image_bytes = io.BytesIO()
