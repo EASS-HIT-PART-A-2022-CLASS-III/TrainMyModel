@@ -57,7 +57,8 @@ async def train(
     momentum: float,
 ):
     app.train_ds, app.val_ds = services.get_datasets(IMG_DATA_PATH, batch_size)
-
+    if app.train_ds is None or app.val_ds is None:
+        raise fastapi.HTTPException(status_code=404, detail="Dataset not found")
     app.model = MyModel(len(app.train_ds.class_names))
     services.compile_model(
         app.model, optimizer=optimizer, loss=loss, lr=learning_rate, momentum=momentum
@@ -99,6 +100,8 @@ async def train(
 # delete the model from shared folder
 @app.get("/model/delete")
 async def delete_model():
+    if app.model is None:
+        raise fastapi.HTTPException(status_code=400, detail="Model not trained")
     services.delete_model(SHARED_DATA_PATH)
     app.model = None
     return {"message": "Model deleted successfully"}

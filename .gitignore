@@ -13,3 +13,6 @@ __pycache__/
 
 # Data examples
 PetImages/*
+
+# Shared data for tests
+shared/

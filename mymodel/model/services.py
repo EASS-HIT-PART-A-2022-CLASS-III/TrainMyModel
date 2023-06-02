@@ -5,6 +5,8 @@ import shutil
 
 
 def get_datasets(path: str, batch_size: int):
+    if len(os.listdir(path)) == 0:
+        return None, None
     return tf.keras.utils.image_dataset_from_directory(
         path,
         validation_split=0.2,
